@@ -1,0 +1,36 @@
+{
+    "manifestVersion": 1,
+    "id": "jira-issue-extractor",
+    "name": "Jira keys Tools",
+    "version": "1.0.0",
+    "publisher": "AttilaHajdu",
+    "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services"
+        }
+    ],    
+    "description": "Tools for handling Jira keys.",
+    "categories": [
+        "Azure Pipelines"
+    ],
+    "icons": {
+        "default": "images/extension-icon.png"
+    },
+    "files": [
+        {
+            "path": "tasks/extractor"
+        }
+    ],
+    "contributions": [
+        {
+            "id": "bb202716-b787-11ec-b909-0242ac120002",
+            "type": "ms.vss-distributed-task.task",
+            "targets": [
+                "ms.vss-distributed-task.tasks"
+            ],
+            "properties": {
+                "name": "tasks/extractor"
+            }
+        }
+    ]
+}
