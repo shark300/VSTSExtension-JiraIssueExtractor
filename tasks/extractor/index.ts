@@ -1,15 +1,11 @@
 import tl = require('azure-pipelines-task-lib/task');
+import { Pipeline } from "./pipeline";
 
 async function run() {
     try {
-        const inputString: string | undefined = tl.getInput('samplestring', true);
-        if (inputString == 'bad') {
-            tl.setResult(tl.TaskResult.Failed, 'Bad input was given');
-            return;
-        }
-        console.log('Hello', inputString);
-    }
-    catch (err) {
+        let pipeline = new Pipeline();
+        pipeline.banner(`Extracting Jira keys from current build`);
+    } catch (err) {
         tl.setResult(tl.TaskResult.Failed, err.message);
     }
 }

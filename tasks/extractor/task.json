@@ -12,16 +12,8 @@
         "Minor": 0,
         "Patch": 0
     },
-    "instanceNameFormat": "Echo $(samplestring)",
+    "instanceNameFormat": "Extract Jira keys",
     "inputs": [
-        {
-            "name": "samplestring",
-            "type": "string",
-            "label": "Sample String",
-            "defaultValue": "",
-            "required": true,
-            "helpMarkDown": "A sample string"
-        }
     ],
     "execution": {
         "Node10": {
