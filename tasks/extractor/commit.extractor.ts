@@ -19,7 +19,7 @@ export class CommitExtractor implements IExtractApi {
 
         const jiraKeyWithoutFixes = /.*?([A-Z]+-\d+).*?/g;
 
-        let extractedJiraKeys: string[] = [jiraKeyWithoutFixes].map(regExp => Array.from(message.matchAll(regExp)))
+        const extractedJiraKeys: string[] = [jiraKeyWithoutFixes].map(regExp => Array.from(message.matchAll(regExp)))
             .flatMap(matches => matches)
             .flatMap(function (matches) {
                 matches.shift(); // skip whole match

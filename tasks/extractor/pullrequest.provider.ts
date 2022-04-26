@@ -12,12 +12,12 @@ export class PullRequestProvider {
     }
 
     async getPullRequest(project: string, buildId: number): Promise<GitPullRequest> {
-        let vsts: vm.WebApi = await this.pipeline.getWebApi();
-        let vstsBuild: ba.IBuildApi = await vsts.getBuildApi();
+        const vsts: vm.WebApi = await this.pipeline.getWebApi();
+        const vstsBuild: ba.IBuildApi = await vsts.getBuildApi();
 
         this.pipeline.heading(`Get branch for ${project} with buildId: ${buildId}`);
 
-        let build = await vstsBuild.getBuild(project, buildId);
+        const build = await vstsBuild.getBuild(project, buildId);
 
         if (build.reason != bi.BuildReason.IndividualCI) {
             throw Error("IndividualCI is supported only");
@@ -27,20 +27,20 @@ export class PullRequestProvider {
             throw Error("TfsGit Repository type is supported only");
         }
 
-        let sourceVersion = build.sourceVersion as string;
-        let sourceBranch = build.sourceBranch as string;
-        let repositoryId = (build.repository as bi.BuildRepository).id as string;
+        const sourceVersion = build.sourceVersion as string;
+        const sourceBranch = build.sourceBranch as string;
+        const repositoryId = (build.repository as bi.BuildRepository).id as string;
 
         this.pipeline.heading(`Searching for Pull Request for ${sourceVersion} sourceVersion at repositoryId: ${repositoryId}`);
 
-        let vstsGit: gitm.IGitApi = await vsts.getGitApi();
+        const vstsGit: gitm.IGitApi = await vsts.getGitApi();
 
-        let pullRequests = await vstsGit.getPullRequests(repositoryId, <gi.GitPullRequestSearchCriteria>{
+        const pullRequests = await vstsGit.getPullRequests(repositoryId, <gi.GitPullRequestSearchCriteria>{
             status: gi.PullRequestStatus.Completed,
             targetRefName: sourceBranch,
         });
 
-        let firstMatchingPullRequestForBuild = pullRequests.filter(pullRequest => pullRequest.lastMergeCommit?.commitId == sourceVersion).find(v => v);
+        const firstMatchingPullRequestForBuild = pullRequests.filter(pullRequest => pullRequest.lastMergeCommit?.commitId == sourceVersion).find(v => v);
 
         if (firstMatchingPullRequestForBuild) {
             return firstMatchingPullRequestForBuild;

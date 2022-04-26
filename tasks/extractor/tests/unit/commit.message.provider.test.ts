@@ -24,16 +24,16 @@ describe("Commit message provider", function () {
 
     let commitMessageProvider: CommitMessageProvider;
 
-    let pipelineMock = stubConstructor(Pipeline);
-    let webApiMock = createStubInstance(WebApi);
-    let buildApiMock = stubInterface<IBuildApi>();
+    const pipelineMock = stubConstructor(Pipeline);
+    const webApiMock = createStubInstance(WebApi);
+    const buildApiMock = stubInterface<IBuildApi>();
 
-    let invalidMessage: Change = {};
+    const invalidMessage: Change = {};
 
-    let firstValidChange: Change = {
+    const firstValidChange: Change = {
         message: firstMessage
     };
-    let secondValidChange: Change = {
+    const secondValidChange: Change = {
         message: secondMessage
     };
 

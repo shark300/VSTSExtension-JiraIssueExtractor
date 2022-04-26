@@ -6,7 +6,7 @@ export class BranchExtractor implements IExtractApi {
     constructor(public branchNameProvider: BranchNameProvider) {
     }
 
-    async getJiraKeys(project: string, buildId: number): Promise<String[]> {
+    async getJiraKeys(project: string, buildId: number): Promise<string[]> {
         return this.branchNameProvider.getBranchName(project, buildId)
             .then((value) => this.extractJiraKeys(value));
     }
@@ -21,7 +21,7 @@ export class BranchExtractor implements IExtractApi {
         const jiraKeyWithPrefix = /^.*?\W([A-Z]+-\d+)$/g;
         const jiraKeyWithPrefixAndSuffix = /.*?\W([A-Z]+-\d+)\W.*?/g;
 
-        let extractedJiraKeys: string[] = [jiraKeyWithoutFixes, jiraKeyWithSuffix, jiraKeyWithPrefix, jiraKeyWithPrefixAndSuffix]
+        const extractedJiraKeys: string[] = [jiraKeyWithoutFixes, jiraKeyWithSuffix, jiraKeyWithPrefix, jiraKeyWithPrefixAndSuffix]
             .map(regExp => Array.from(branchName.matchAll(regExp)))
             .flatMap(matches => matches)
             .flatMap(function (matches) {

@@ -12,8 +12,8 @@ describe("Branch name provider", function () {
 
     let branchNameProvider: BranchNameProvider;
 
-    let pullRequestProvider = createStubInstance(PullRequestProvider);
-    let gitPullRequestStub = stubInterface<GitPullRequest>();
+    const pullRequestProvider = createStubInstance(PullRequestProvider);
+    const gitPullRequestStub = stubInterface<GitPullRequest>();
 
     const dummyProject = "dummyProject";
     const dummyBuildId = 1;

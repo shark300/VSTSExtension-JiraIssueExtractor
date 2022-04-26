@@ -12,7 +12,7 @@ describe("Commit extractor", function () {
 
     let branchNameExtractor: CommitExtractor;
 
-    let commitMessageProviderMock = stubConstructor(CommitMessageProvider);
+    const commitMessageProviderMock = stubConstructor(CommitMessageProvider);
 
     beforeEach(() => {
         branchNameExtractor = new CommitExtractor(commitMessageProviderMock);
