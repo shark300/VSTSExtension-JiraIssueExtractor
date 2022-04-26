@@ -2,7 +2,6 @@ import chai = require("chai");
 import chaiAsPromised from "chai-as-promised";
 
 import { stubConstructor, stubInterface } from "ts-sinon";
-
 import { Pipeline } from "../../pipeline";
 import { WebApi } from "azure-devops-node-api";
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
@@ -12,7 +11,6 @@ import {
   BuildRepository,
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import { IGitApi } from "azure-devops-node-api/GitApi";
-import { createStubInstance } from "sinon";
 import { PullRequestProvider } from "../../pullrequest.provider";
 import { $enum } from "ts-enum-util";
 import {
@@ -36,7 +34,7 @@ describe("Pull Request provider", function () {
   let branchNameProvider: PullRequestProvider;
 
   const pipelineMock = stubConstructor(Pipeline);
-  const webApiMock = createStubInstance(WebApi);
+  const webApiMock = stubInterface<WebApi>();
   const buildApiMock = stubInterface<IBuildApi>();
   const gitApiMock = stubInterface<IGitApi>();
 
