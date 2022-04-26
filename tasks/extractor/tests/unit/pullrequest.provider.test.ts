@@ -29,13 +29,13 @@ describe("Pull Request provider", function () {
 
     let branchNameProvider: PullRequestProvider;
 
-    let pipelineMock = stubConstructor(Pipeline);
-    let webApiMock = createStubInstance(WebApi);
-    let buildApiMock = stubInterface<IBuildApi>();
-    let gitApiMock = stubInterface<IGitApi>();
+    const pipelineMock = stubConstructor(Pipeline);
+    const webApiMock = createStubInstance(WebApi);
+    const buildApiMock = stubInterface<IBuildApi>();
+    const gitApiMock = stubInterface<IGitApi>();
 
-    let mismatchingGitPullRequest: GitPullRequest = {};
-    let matchingGitPullRequest: GitPullRequest = {};
+    const mismatchingGitPullRequest: GitPullRequest = {};
+    const matchingGitPullRequest: GitPullRequest = {};
 
     let buildRepository: BuildRepository = {};
     let build: Build = {};

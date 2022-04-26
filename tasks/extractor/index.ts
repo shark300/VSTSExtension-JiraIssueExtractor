@@ -3,7 +3,7 @@ import { Pipeline } from "./pipeline";
 
 async function run() {
     try {
-        let pipeline = new Pipeline();
+        const pipeline = new Pipeline();
         pipeline.banner(`Extracting Jira keys from current build`);
     } catch (err) {
         tl.setResult(tl.TaskResult.Failed, err.message);
