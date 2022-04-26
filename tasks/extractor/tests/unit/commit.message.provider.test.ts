@@ -1,8 +1,8 @@
 import chai = require("chai");
 import { stubConstructor, stubInterface } from "ts-sinon";
 
-import { CommitMessageProvider } from "../../commit.message.provider";
-import { Pipeline } from "../../pipeline";
+import { CommitMessageProvider } from "@/commit.message.provider";
+import { Pipeline } from "@/pipeline";
 import { createStubInstance } from "sinon";
 import { WebApi } from "azure-devops-node-api";
 import { IBuildApi } from "azure-devops-node-api/BuildApi";

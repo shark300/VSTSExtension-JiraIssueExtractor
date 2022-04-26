@@ -1,4 +1,4 @@
-import { PullRequestProvider } from "./pullrequest.provider";
+import { PullRequestProvider } from "@/pullrequest.provider";
 
 export class BranchNameProvider {
   constructor(public pullRequestProvider: PullRequestProvider) {}

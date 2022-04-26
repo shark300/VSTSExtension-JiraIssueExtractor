@@ -1,5 +1,5 @@
 import tl = require("azure-pipelines-task-lib/task");
-import { Pipeline } from "./pipeline";
+import { Pipeline } from "@/pipeline";
 
 async function run() {
   try {

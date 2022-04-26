@@ -1,7 +1,7 @@
 import chai = require("chai");
 import { stubConstructor } from "ts-sinon";
-import { CommitMessageProvider } from "../../commit.message.provider";
-import { CommitExtractor } from "../../commit.extractor";
+import { CommitMessageProvider } from "@/commit.message.provider";
+import { CommitExtractor } from "@/commit.extractor";
 
 const expect = chai.expect;
 

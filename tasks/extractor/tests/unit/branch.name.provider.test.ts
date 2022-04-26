@@ -1,8 +1,8 @@
 import chai from "chai";
 import { stubConstructor, stubInterface } from "ts-sinon";
 
-import { BranchNameProvider } from "../../branch.name.provider";
-import { PullRequestProvider } from "../../pullrequest.provider";
+import { BranchNameProvider } from "@/branch.name.provider";
+import { PullRequestProvider } from "@/pullrequest.provider";
 import { GitPullRequest } from "azure-devops-node-api/interfaces/GitInterfaces";
 
 const expect = chai.expect;
