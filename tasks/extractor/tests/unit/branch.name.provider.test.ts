@@ -1,4 +1,4 @@
-import chai = require("chai");
+import chai from "chai";
 import { stubInterface } from "ts-sinon";
 
 import { BranchNameProvider } from "../../branch.name.provider";
@@ -9,34 +9,37 @@ import { GitPullRequest } from "azure-devops-node-api/interfaces/GitInterfaces";
 const expect = chai.expect;
 
 describe("Branch name provider", function () {
+  let branchNameProvider: BranchNameProvider;
 
-    let branchNameProvider: BranchNameProvider;
+  const pullRequestProvider = createStubInstance(PullRequestProvider);
+  const gitPullRequestStub = stubInterface<GitPullRequest>();
 
-    const pullRequestProvider = createStubInstance(PullRequestProvider);
-    const gitPullRequestStub = stubInterface<GitPullRequest>();
+  const dummyProject = "dummyProject";
+  const dummyBuildId = 1;
+  const dummyBranchName = "dummyBranchName";
 
-    const dummyProject = "dummyProject";
-    const dummyBuildId = 1;
-    const dummyBranchName = "dummyBranchName"
+  beforeEach(() => {
+    branchNameProvider = new BranchNameProvider(pullRequestProvider);
 
-    beforeEach(() => {
-        branchNameProvider = new BranchNameProvider(pullRequestProvider);
+    gitPullRequestStub.sourceRefName = dummyBranchName;
+  });
 
-        gitPullRequestStub.sourceRefName = dummyBranchName;
+  describe("getBranchName", function () {
+    it("should return branch name from pull request", async function () {
+      // given
+
+      pullRequestProvider.getPullRequest
+        .withArgs(dummyProject, dummyBuildId)
+        .resolves(gitPullRequestStub);
+
+      // when
+      const actual = await branchNameProvider.getBranchName(
+        dummyProject,
+        dummyBuildId
+      );
+
+      // then
+      expect(actual).to.equals(dummyBranchName);
     });
-
-    describe("getBranchName", function () {
-        
-        it("should return branch name from pull request", async function () {
-            // given
-
-            pullRequestProvider.getPullRequest.withArgs(dummyProject, dummyBuildId).resolves(gitPullRequestStub);
-
-            // when
-            const actual = await branchNameProvider.getBranchName(dummyProject, dummyBuildId);
-
-            // then
-            expect(actual).to.equals(dummyBranchName);
-        });
-    });
+  });
 });
