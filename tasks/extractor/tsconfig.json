@@ -3,11 +3,13 @@
     "target": "es6",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["*"]
+      "@/*": ["src/*"]
     },
     "module": "commonjs",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
-  }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "tests/**/*.ts"]
 }
