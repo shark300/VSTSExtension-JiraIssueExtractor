@@ -4,7 +4,7 @@ import * as lim from "azure-devops-node-api/interfaces/LocationsInterfaces";
 export class Pipeline {
 
     getEnv(name: string): string {
-        let val = process.env[name];
+        const val = process.env[name];
         if (!val) {
             console.error(`${name} env var not set`);
             process.exit(1);
@@ -18,20 +18,14 @@ export class Pipeline {
     }
 
     async getApi(serverUrl: string): Promise<vm.WebApi> {
-        return new Promise<vm.WebApi>(async (resolve, reject) => {
-            try {
-                let token = this.getEnv("SYSTEM_ACCESSTOKEN");
-                let authHandler = vm.getPersonalAccessTokenHandler(token);
-                let option = undefined;
+            const token = this.getEnv("SYSTEM_ACCESSTOKEN");
+            const authHandler = vm.getPersonalAccessTokenHandler(token);
+            const option = undefined;
 
-                let vsts: vm.WebApi = new vm.WebApi(serverUrl, authHandler, option);
-                let connData: lim.ConnectionData = await vsts.connect();
-                console.log(`Hello ${connData.authenticatedUser?.providerDisplayName}`);
-                resolve(vsts);
-            } catch (err) {
-                reject(err);
-            }
-        });
+            const vsts: vm.WebApi = new vm.WebApi(serverUrl, authHandler, option);
+            const connData: lim.ConnectionData = await vsts.connect();
+            console.log(`Hello ${connData.authenticatedUser?.providerDisplayName}`);
+            return vsts;
     }
 
     getProject(): string {

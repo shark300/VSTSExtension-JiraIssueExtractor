@@ -10,7 +10,7 @@ describe("Branch extractor", function () {
 
     let branchNameExtractor: BranchExtractor;
 
-    let branchNameProviderMock = stubConstructor(BranchNameProvider);
+    const branchNameProviderMock = stubConstructor(BranchNameProvider);
 
     beforeEach(() => {
         branchNameExtractor = new BranchExtractor(branchNameProviderMock);

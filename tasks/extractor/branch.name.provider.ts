@@ -6,7 +6,7 @@ export class BranchNameProvider {
     }
 
     async getBranchName(project: string, buildId: number): Promise<string> {
-        let firstMatchingPullRequestForBuild = await this.pullRequestProvider.getPullRequest(project, buildId);
+        const firstMatchingPullRequestForBuild = await this.pullRequestProvider.getPullRequest(project, buildId);
         return firstMatchingPullRequestForBuild?.sourceRefName as string;
     }
 }

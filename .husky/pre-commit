@@ -3,4 +3,5 @@
 
 cd tasks || exit
 cd extractor || exit
+npm run lint:check
 npm test
