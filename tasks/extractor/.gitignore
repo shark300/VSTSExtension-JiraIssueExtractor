@@ -1,6 +1,5 @@
 node_modules
-**/*.js
-!**/.eslintrc.js
+dist
 .nyc_output
 ### IntelliJ IDEA ###
 .idea

@@ -2,7 +2,7 @@
   "name": "extractor",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "directories": {
     "test": "tests"
   },
@@ -15,7 +15,8 @@
     "test:watch": "ts-mocha --paths tests/**/*.test.ts -w --watch-files **/*.ts",
     "lint:check": "eslint ../.. && prettier --check ../..",
     "lint:fix": "eslint ../.. --fix && prettier --write ../..",
-    "prepare": "cd ../.. && husky install"
+    "prepare": "cd ../.. && husky install",
+    "build": "tsc --outDir dist"
   },
   "keywords": [],
   "author": "",
