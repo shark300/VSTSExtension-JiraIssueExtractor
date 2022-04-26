@@ -1,5 +1,5 @@
-import { CommitMessageProvider } from "./commit.message.provider";
-import { IExtractApi } from "./ExtractApi";
+import { CommitMessageProvider } from "@/commit.message.provider";
+import { IExtractApi } from "@/ExtractApi";
 
 export class CommitExtractor implements IExtractApi {
   constructor(public commitMessageProvider: CommitMessageProvider) {}

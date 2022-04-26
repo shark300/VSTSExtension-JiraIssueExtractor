@@ -1,5 +1,5 @@
-import { BranchNameProvider } from "./branch.name.provider";
-import { IExtractApi } from "./ExtractApi";
+import { BranchNameProvider } from "@/branch.name.provider";
+import { IExtractApi } from "@/ExtractApi";
 
 export class BranchExtractor implements IExtractApi {
   constructor(public branchNameProvider: BranchNameProvider) {}

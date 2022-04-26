@@ -4,7 +4,7 @@ import * as gitm from "azure-devops-node-api/GitApi";
 import * as bi from "azure-devops-node-api/interfaces/BuildInterfaces";
 import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
 import { GitPullRequest } from "azure-devops-node-api/interfaces/GitInterfaces";
-import { Pipeline } from "./pipeline";
+import { Pipeline } from "@/pipeline";
 
 export class PullRequestProvider {
   constructor(public pipeline: Pipeline) {}
