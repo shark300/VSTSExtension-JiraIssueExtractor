@@ -1,6 +1,6 @@
-import tl = require("azure-pipelines-task-lib/task");
+import tl from "azure-pipelines-task-lib/task";
 
-import { Pipeline } from "./pipeline";
+import { Pipeline } from "@/pipeline";
 
 import * as vm from "azure-devops-node-api";
 import * as ba from "azure-devops-node-api/BuildApi";

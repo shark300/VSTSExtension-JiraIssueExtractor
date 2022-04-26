@@ -2,7 +2,7 @@ import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 
 import { stubConstructor, stubInterface } from "ts-sinon";
-import { Pipeline } from "../../pipeline";
+import { Pipeline } from "@/pipeline";
 import { WebApi } from "azure-devops-node-api";
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import {
@@ -11,7 +11,7 @@ import {
   BuildRepository,
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import { IGitApi } from "azure-devops-node-api/GitApi";
-import { PullRequestProvider } from "../../pullrequest.provider";
+import { PullRequestProvider } from "@/pullrequest.provider";
 import { $enum } from "ts-enum-util";
 import {
   GitPullRequest,

@@ -1,4 +1,4 @@
-import tl = require("azure-pipelines-task-lib/task");
+import tl from "azure-pipelines-task-lib/task";
 
 async function run() {
   try {

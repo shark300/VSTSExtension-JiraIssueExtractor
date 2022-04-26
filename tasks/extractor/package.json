@@ -11,7 +11,7 @@
     "azure-pipelines-task-lib": "^3.2.0"
   },
   "scripts": {
-    "test": "ts-mocha -p ./tsconfig.json tests/**/*.test.ts",
+    "test": "ts-mocha --paths tests/**/*.test.ts",
     "lint:check": "eslint ../.. && prettier --check ../..",
     "lint:fix": "eslint ../.. --fix && prettier --write ../..",
     "prepare": "cd ../.. && husky install"
@@ -36,6 +36,7 @@
     "ts-enum-util": "^4.0.2",
     "ts-mocha": "^9.0.2",
     "ts-sinon": "^2.0.2",
+    "tsconfig-paths": "^3.14.1",
     "typescript": "^4.0.2"
   }
 }

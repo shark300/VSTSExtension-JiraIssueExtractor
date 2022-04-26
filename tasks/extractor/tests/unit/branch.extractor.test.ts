@@ -1,8 +1,8 @@
 import chai from "chai";
 import { stubConstructor } from "ts-sinon";
 
-import { BranchNameProvider } from "../../branch.name.provider";
-import { BranchExtractor } from "../../branch.extractor";
+import { BranchNameProvider } from "@/branch.name.provider";
+import { BranchExtractor } from "@/branch.extractor";
 
 const expect = chai.expect;
 
