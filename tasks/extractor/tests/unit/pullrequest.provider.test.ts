@@ -1,5 +1,5 @@
 import chai = require("chai");
-import chaiAsPromised from "chai-as-promised";
+import chaiAsPromised = require("chai-as-promised");
 
 import { stubConstructor, stubInterface } from "ts-sinon";
 import { Pipeline } from "@/pipeline";

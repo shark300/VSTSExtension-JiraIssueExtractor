@@ -1,4 +1,4 @@
-import chai from "chai";
+import chai = require("chai");
 import { stubConstructor, stubInterface } from "ts-sinon";
 
 import { BranchNameProvider } from "@/branch.name.provider";
