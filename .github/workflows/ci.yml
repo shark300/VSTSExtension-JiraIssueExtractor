@@ -1,5 +1,5 @@
-name: azure2jira CI
-on: [pull_request]
+name: VSTSExtension-JiraIssueExtractor CI
+on: [pull_request, push]
 jobs:
   code_lint:
     runs-on: ubuntu-latest
