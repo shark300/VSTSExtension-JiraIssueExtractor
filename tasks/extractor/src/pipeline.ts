@@ -34,15 +34,4 @@ export class Pipeline {
   getBuildId(): number {
     return parseInt(this.getEnv("BUILD_BUILDID"));
   }
-
-  banner(title: string): void {
-    console.log("=======================================");
-    console.log(`\t${title}`);
-    console.log("=======================================");
-  }
-
-  heading(title: string): void {
-    console.log();
-    console.log(`> ${title}`);
-  }
 }

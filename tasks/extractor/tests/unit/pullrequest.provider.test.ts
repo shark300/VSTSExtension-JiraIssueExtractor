@@ -1,26 +1,27 @@
 import chai = require("chai");
 import chaiAsPromised = require("chai-as-promised");
+chai.use(chaiAsPromised);
+const expect = chai.expect;
 
 import { stubConstructor, stubInterface } from "ts-sinon";
-import { Pipeline } from "@/pipeline";
+import { $enum } from "ts-enum-util";
+
 import { WebApi } from "azure-devops-node-api";
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
+import { IGitApi } from "azure-devops-node-api/GitApi";
 import {
   Build,
   BuildReason,
   BuildRepository,
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
-import { IGitApi } from "azure-devops-node-api/GitApi";
-import { PullRequestProvider } from "@/pullrequest.provider";
-import { $enum } from "ts-enum-util";
 import {
   GitPullRequest,
   PullRequestStatus,
 } from "azure-devops-node-api/interfaces/GitInterfaces";
 
-chai.use(chaiAsPromised);
-
-const expect = chai.expect;
+import { PullRequestProvider } from "@/pullrequest.provider";
+import { Pipeline } from "@/pipeline";
+import { Logger } from "@/logger";
 
 describe("Pull Request provider", function () {
   const dummyProject = "dummyProject";
@@ -34,6 +35,8 @@ describe("Pull Request provider", function () {
   let branchNameProvider: PullRequestProvider;
 
   const pipelineMock = stubConstructor(Pipeline);
+  const loggerMock = stubConstructor(Logger);
+
   const webApiMock = stubInterface<WebApi>();
   const buildApiMock = stubInterface<IBuildApi>();
   const gitApiMock = stubInterface<IGitApi>();
@@ -45,7 +48,7 @@ describe("Pull Request provider", function () {
   let build: Build = {};
 
   beforeEach(() => {
-    branchNameProvider = new PullRequestProvider(pipelineMock);
+    branchNameProvider = new PullRequestProvider(pipelineMock, loggerMock);
 
     buildRepository = {
       id: dummyBuildRepositoryId,

@@ -1,9 +1,10 @@
 import chai = require("chai");
+const expect = chai.expect;
+
 import { stubConstructor } from "ts-sinon";
+
 import { CommitMessageProvider } from "@/commit.message.provider";
 import { CommitExtractor } from "@/commit.extractor";
-
-const expect = chai.expect;
 
 describe("Commit extractor", function () {
   const dummyProject = "dummyProject";

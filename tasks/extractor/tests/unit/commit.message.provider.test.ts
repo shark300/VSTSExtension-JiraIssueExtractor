@@ -1,10 +1,12 @@
 import chai = require("chai");
 import chaiAsPromised = require("chai-as-promised");
-import { stubConstructor, stubInterface } from "ts-sinon";
+chai.use(chaiAsPromised);
+const expect = chai.expect;
 
-import { CommitMessageProvider } from "@/commit.message.provider";
-import { Pipeline } from "@/pipeline";
+import { stubConstructor, stubInterface } from "ts-sinon";
 import { createStubInstance } from "sinon";
+import { $enum } from "ts-enum-util";
+
 import { WebApi } from "azure-devops-node-api";
 import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import {
@@ -12,11 +14,10 @@ import {
   BuildReason,
   Change,
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
-import { $enum } from "ts-enum-util";
 
-chai.use(chaiAsPromised);
-
-const expect = chai.expect;
+import { CommitMessageProvider } from "@/commit.message.provider";
+import { Pipeline } from "@/pipeline";
+import { Logger } from "@/logger";
 
 describe("Commit message provider", function () {
   const dummyProject = "dummyProject";
@@ -28,6 +29,8 @@ describe("Commit message provider", function () {
   let commitMessageProvider: CommitMessageProvider;
 
   const pipelineMock = stubConstructor(Pipeline);
+  const loggerMock = stubConstructor(Logger);
+
   const webApiMock = createStubInstance(WebApi);
   const buildApiMock = stubInterface<IBuildApi>();
 
@@ -43,7 +46,7 @@ describe("Commit message provider", function () {
   let build: Build = {};
 
   beforeEach(() => {
-    commitMessageProvider = new CommitMessageProvider(pipelineMock);
+    commitMessageProvider = new CommitMessageProvider(pipelineMock, loggerMock);
 
     build = {
       reason: BuildReason.IndividualCI,

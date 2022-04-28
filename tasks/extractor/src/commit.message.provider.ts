@@ -1,11 +1,12 @@
-import { Pipeline } from "@/pipeline";
-
 import * as vm from "azure-devops-node-api";
 import * as ba from "azure-devops-node-api/BuildApi";
 import { BuildReason } from "azure-devops-node-api/interfaces/BuildInterfaces";
 
+import { Pipeline } from "@/pipeline";
+import { Logger } from "@/logger";
+
 export class CommitMessageProvider {
-  constructor(public pipeline: Pipeline) {}
+  constructor(public pipeline: Pipeline, public logger: Logger) {}
 
   async getCommitMessages(project: string, buildId: number): Promise<string[]> {
     const vsts: vm.WebApi = await this.pipeline.getWebApi();
@@ -17,9 +18,7 @@ export class CommitMessageProvider {
       throw Error("IndividualCI is supported only");
     }
 
-    this.pipeline.heading(
-      `Get changes for ${project} with buildId: ${buildId}`
-    );
+    this.logger.heading(`Get changes for ${project} with buildId: ${buildId}`);
 
     const changes = await vstsBuild.getBuildChanges(project, buildId);
 
