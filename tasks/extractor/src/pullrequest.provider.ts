@@ -3,20 +3,21 @@ import * as ba from "azure-devops-node-api/BuildApi";
 import * as gitm from "azure-devops-node-api/GitApi";
 import * as bi from "azure-devops-node-api/interfaces/BuildInterfaces";
 import * as gi from "azure-devops-node-api/interfaces/GitInterfaces";
-import { GitPullRequest } from "azure-devops-node-api/interfaces/GitInterfaces";
+
 import { Pipeline } from "@/pipeline";
+import { Logger } from "@/logger";
 
 export class PullRequestProvider {
-  constructor(public pipeline: Pipeline) {}
+  constructor(public pipeline: Pipeline, public logger: Logger) {}
 
   async getPullRequest(
     project: string,
     buildId: number
-  ): Promise<GitPullRequest> {
+  ): Promise<gi.GitPullRequest> {
     const vsts: vm.WebApi = await this.pipeline.getWebApi();
     const vstsBuild: ba.IBuildApi = await vsts.getBuildApi();
 
-    this.pipeline.heading(`Get branch for ${project} with buildId: ${buildId}`);
+    this.logger.heading(`Get branch for ${project} with buildId: ${buildId}`);
 
     const build = await vstsBuild.getBuild(project, buildId);
 
@@ -32,7 +33,7 @@ export class PullRequestProvider {
     const sourceBranch = build.sourceBranch as string;
     const repositoryId = (build.repository as bi.BuildRepository).id as string;
 
-    this.pipeline.heading(
+    this.logger.heading(
       `Searching for Pull Request for ${sourceVersion} sourceVersion at repositoryId: ${repositoryId}`
     );
 

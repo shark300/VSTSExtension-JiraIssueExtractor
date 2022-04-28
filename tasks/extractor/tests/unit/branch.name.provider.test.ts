@@ -1,11 +1,12 @@
 import chai = require("chai");
+const expect = chai.expect;
+
 import { stubConstructor, stubInterface } from "ts-sinon";
+
+import { GitPullRequest } from "azure-devops-node-api/interfaces/GitInterfaces";
 
 import { BranchNameProvider } from "@/branch.name.provider";
 import { PullRequestProvider } from "@/pullrequest.provider";
-import { GitPullRequest } from "azure-devops-node-api/interfaces/GitInterfaces";
-
-const expect = chai.expect;
 
 describe("Branch name provider", function () {
   let branchNameProvider: BranchNameProvider;
