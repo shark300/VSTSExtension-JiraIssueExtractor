@@ -18,11 +18,14 @@ async function run() {
 
     const pullRequestProvider = new PullRequestProvider(pipeline, logger);
 
-    const branchNameProvider = new BranchNameProvider(pullRequestProvider);
-    const branchExtractor = new BranchExtractor(branchNameProvider);
+    const branchNameProvider = new BranchNameProvider(
+      pullRequestProvider,
+      logger
+    );
+    const branchExtractor = new BranchExtractor(branchNameProvider, logger);
 
     const commitMessageProvider = new CommitMessageProvider(pipeline, logger);
-    const commitExtractor = new CommitExtractor(commitMessageProvider);
+    const commitExtractor = new CommitExtractor(commitMessageProvider, logger);
 
     const extractorService = new ExtractorService([
       branchExtractor,
@@ -34,7 +37,7 @@ async function run() {
       pipeline.getBuildId()
     );
 
-    logger.log(`Extracted Jira keys: ${jiraKeys}`);
+    logger.log(`All extracted Jira keys: ${jiraKeys}`);
 
     logger.log(`Publishing variable`);
 
