@@ -1,10 +1,26 @@
 import chai = require("chai");
+// import chaiAzure = require("../util/chai-azure");
+// chai.use(chaiAzure);
 const expect = chai.expect;
 
 import * as path from "path";
 import * as ttm from "azure-pipelines-task-lib/mock-test";
 
 describe("Extract Jira keys", function () {
+  function getVariable(
+    testRunner: ttm.MockTestRunner,
+    variableName: string
+  ): string | undefined {
+    const parseVariableValue = new RegExp(
+      `##vso\\[task\\.setvariable variable=${variableName};isOutput=false;issecret=false;\\](.*)$`,
+      "m"
+    );
+    const match = testRunner.stdout.match(parseVariableValue);
+    if (match) {
+      return match.pop();
+    }
+  }
+
   it("should succeed with given values", function (done: Mocha.Done) {
     // given
     this.timeout(100000);
@@ -19,6 +35,7 @@ describe("Extract Jira keys", function () {
     expect(tr.succeeded).to.equals(true, "should have succeeded");
     expect(tr.warningIssues.length).to.equals(0, "should have no warnings");
     expect(tr.errorIssues.length).to.equals(0, "should have no errors");
+    expect(getVariable(tr, "JIRA_KEYS")).to.equal("JIE-541, JIE-1257");
     console.log(tr.stdout);
     done();
   });

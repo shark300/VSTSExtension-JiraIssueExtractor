@@ -12,8 +12,9 @@
     "core-js": "^3.22.3"
   },
   "scripts": {
-    "test": "ts-mocha --paths tests/**/*.test.ts",
-    "test:watch": "ts-mocha --paths tests/**/*.test.ts -w --watch-files **/*.ts",
+    "integrationTest": "npm run build && tsc tests/integration/setup.ts && ts-mocha --paths tests/integration/*.test.ts",
+    "test": "ts-mocha --paths tests/unit/*.test.ts",
+    "test:watch": "ts-mocha --paths tests/unit/*.test.ts -w --watch-files **/*.ts",
     "lint:check": "eslint ../.. && prettier --check ../..",
     "lint:fix": "eslint ../.. --fix && prettier --write ../..",
     "prepare": "cd ../.. && husky install",
