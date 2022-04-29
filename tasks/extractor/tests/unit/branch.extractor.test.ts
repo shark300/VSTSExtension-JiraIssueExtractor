@@ -5,6 +5,7 @@ import { stubConstructor } from "ts-sinon";
 
 import { BranchNameProvider } from "@/branch.name.provider";
 import { BranchExtractor } from "@/branch.extractor";
+import { Logger } from "../../src/logger";
 
 describe("Branch extractor", function () {
   const dummyProject = "dummyProject";
@@ -13,9 +14,13 @@ describe("Branch extractor", function () {
   let branchNameExtractor: BranchExtractor;
 
   const branchNameProviderMock = stubConstructor(BranchNameProvider);
+  const loggerMock = stubConstructor(Logger);
 
   beforeEach(() => {
-    branchNameExtractor = new BranchExtractor(branchNameProviderMock);
+    branchNameExtractor = new BranchExtractor(
+      branchNameProviderMock,
+      loggerMock
+    );
   });
 
   describe("getJiraKeys", function () {

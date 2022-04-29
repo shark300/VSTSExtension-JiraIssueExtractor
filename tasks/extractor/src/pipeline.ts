@@ -23,7 +23,9 @@ export class Pipeline {
 
     const vsts: vm.WebApi = new vm.WebApi(serverUrl, authHandler, option);
     const connData: lim.ConnectionData = await vsts.connect();
-    console.log(`Hello ${connData.authenticatedUser?.providerDisplayName}`);
+    console.log(
+      `Welcome to ${connData.authenticatedUser?.providerDisplayName}`
+    );
     return vsts;
   }
 

@@ -1,8 +1,8 @@
 export class Logger {
   banner(title: string): void {
-    console.log("=======================================");
+    console.log("==================================================");
     console.log(`\t${title}`);
-    console.log("=======================================");
+    console.log("==================================================");
   }
 
   heading(title: string): void {

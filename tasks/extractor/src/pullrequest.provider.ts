@@ -17,8 +17,6 @@ export class PullRequestProvider {
     const vsts: vm.WebApi = await this.pipeline.getWebApi();
     const vstsBuild: ba.IBuildApi = await vsts.getBuildApi();
 
-    this.logger.heading(`Get branch for ${project} with buildId: ${buildId}`);
-
     const build = await vstsBuild.getBuild(project, buildId);
 
     if (build.reason != bi.BuildReason.IndividualCI) {
@@ -53,6 +51,9 @@ export class PullRequestProvider {
       .find((v) => v);
 
     if (firstMatchingPullRequestForBuild) {
+      this.logger.log(
+        `Found Pull Request with pullRequestId: ${firstMatchingPullRequestForBuild.pullRequestId}`
+      );
       return firstMatchingPullRequestForBuild;
     } else {
       throw Error(

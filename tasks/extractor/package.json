@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "azure-devops-node-api": "^11.1.1",
-    "azure-pipelines-task-lib": "^3.2.0"
+    "azure-pipelines-task-lib": "^3.2.0",
+    "core-js": "^3.22.3"
   },
   "scripts": {
     "test": "ts-mocha --paths tests/**/*.test.ts",
@@ -16,7 +17,7 @@
     "lint:check": "eslint ../.. && prettier --check ../..",
     "lint:fix": "eslint ../.. --fix && prettier --write ../..",
     "prepare": "cd ../.. && husky install",
-    "build": "tsc --outDir dist"
+    "build": "tsc && tsc-alias"
   },
   "keywords": [],
   "author": "",
@@ -39,6 +40,7 @@
     "ts-enum-util": "^4.0.2",
     "ts-mocha": "^9.0.2",
     "ts-sinon": "^2.0.2",
+    "tsc-alias": "^1.6.7",
     "tsconfig-paths": "^3.14.1"
   }
 }

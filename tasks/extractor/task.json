@@ -16,7 +16,7 @@
   "inputs": [],
   "execution": {
     "Node10": {
-      "target": "index.js"
+      "target": "dist/index.js"
     }
   }
 }
