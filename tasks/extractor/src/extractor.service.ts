@@ -1,5 +1,7 @@
 import { IExtractApi } from "@/ExtractApi";
 
+require("core-js/modules/es.array.flat");
+
 export class ExtractorService {
   constructor(public extractors: IExtractApi[]) {}
 

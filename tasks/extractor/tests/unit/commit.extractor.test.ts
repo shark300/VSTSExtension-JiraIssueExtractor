@@ -5,6 +5,7 @@ import { stubConstructor } from "ts-sinon";
 
 import { CommitMessageProvider } from "@/commit.message.provider";
 import { CommitExtractor } from "@/commit.extractor";
+import { Logger } from "../../src/logger";
 
 describe("Commit extractor", function () {
   const dummyProject = "dummyProject";
@@ -13,9 +14,13 @@ describe("Commit extractor", function () {
   let branchNameExtractor: CommitExtractor;
 
   const commitMessageProviderMock = stubConstructor(CommitMessageProvider);
+  const loggerMock = stubConstructor(Logger);
 
   beforeEach(() => {
-    branchNameExtractor = new CommitExtractor(commitMessageProviderMock);
+    branchNameExtractor = new CommitExtractor(
+      commitMessageProviderMock,
+      loggerMock
+    );
   });
 
   describe("getJiraKeys", function () {

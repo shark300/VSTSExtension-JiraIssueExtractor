@@ -9,6 +9,10 @@ export class CommitMessageProvider {
   constructor(public pipeline: Pipeline, public logger: Logger) {}
 
   async getCommitMessages(project: string, buildId: number): Promise<string[]> {
+    this.logger.heading(
+      `Getting commit messages for ${project} with buildId: ${buildId}`
+    );
+
     const vsts: vm.WebApi = await this.pipeline.getWebApi();
     const vstsBuild: ba.IBuildApi = await vsts.getBuildApi();
 
@@ -18,12 +22,13 @@ export class CommitMessageProvider {
       throw Error("IndividualCI is supported only");
     }
 
-    this.logger.heading(`Get changes for ${project} with buildId: ${buildId}`);
+    this.logger.log(`Get changes for ${project} with buildId: ${buildId}`);
 
-    const changes = await vstsBuild.getBuildChanges(project, buildId);
-
-    return changes
+    const changes = (await vstsBuild.getBuildChanges(project, buildId))
       .map((change) => change.message)
       .filter((message): message is string => !!message);
+
+    this.logger.log(`Found changes: ${changes}`);
+    return changes;
   }
 }

@@ -21,3 +21,13 @@ jobs:
         working-directory: ./tasks/extractor
       - run: npm run test
         working-directory: ./tasks/extractor
+  integration_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+      - run: npm install npm@latest -g
+      - run: npm ci
+        working-directory: ./tasks/extractor
+      - run: npm run integrationTest
+        working-directory: ./tasks/extractor

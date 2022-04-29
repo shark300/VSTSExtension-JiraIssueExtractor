@@ -1,36 +1,44 @@
 import chai = require("chai");
 const expect = chai.expect;
 
-import { stubConstructor, stubInterface } from "ts-sinon";
+import { stubConstructor } from "ts-sinon";
 
 import { GitPullRequest } from "azure-devops-node-api/interfaces/GitInterfaces";
 
 import { BranchNameProvider } from "@/branch.name.provider";
 import { PullRequestProvider } from "@/pullrequest.provider";
+import { Logger } from "../../src/logger";
 
 describe("Branch name provider", function () {
-  let branchNameProvider: BranchNameProvider;
-
-  const pullRequestProvider = stubConstructor(PullRequestProvider);
-  const gitPullRequestStub = stubInterface<GitPullRequest>();
-
   const dummyProject = "dummyProject";
   const dummyBuildId = 1;
   const dummyBranchName = "dummyBranchName";
 
-  beforeEach(() => {
-    branchNameProvider = new BranchNameProvider(pullRequestProvider);
+  let branchNameProvider: BranchNameProvider;
 
-    gitPullRequestStub.sourceRefName = dummyBranchName;
+  const pullRequestProviderMock = stubConstructor(PullRequestProvider);
+  const loggerMock = stubConstructor(Logger);
+
+  let gitPullRequest: GitPullRequest = {};
+
+  beforeEach(() => {
+    branchNameProvider = new BranchNameProvider(
+      pullRequestProviderMock,
+      loggerMock
+    );
+
+    gitPullRequest = {
+      sourceRefName: dummyBranchName,
+    };
   });
 
   describe("getBranchName", function () {
     it("should return branch name from pull request", async function () {
       // given
 
-      pullRequestProvider.getPullRequest
+      pullRequestProviderMock.getPullRequest
         .withArgs(dummyProject, dummyBuildId)
-        .resolves(gitPullRequestStub);
+        .resolves(gitPullRequest);
 
       // when
       const actual = await branchNameProvider.getBranchName(
