@@ -7,7 +7,7 @@ import { GitPullRequest } from "azure-devops-node-api/interfaces/GitInterfaces";
 
 import { BranchNameProvider } from "@/branch.name.provider";
 import { PullRequestProvider } from "@/pullrequest.provider";
-import { Logger } from "../../src/logger";
+import { Logger } from "@/logger";
 
 describe("Branch name provider", function () {
   const dummyProject = "dummyProject";

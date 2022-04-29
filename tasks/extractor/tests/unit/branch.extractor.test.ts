@@ -5,7 +5,7 @@ import { stubConstructor } from "ts-sinon";
 
 import { BranchNameProvider } from "@/branch.name.provider";
 import { BranchExtractor } from "@/branch.extractor";
-import { Logger } from "../../src/logger";
+import { Logger } from "@/logger";
 
 describe("Branch extractor", function () {
   const dummyProject = "dummyProject";

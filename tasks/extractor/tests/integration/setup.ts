@@ -70,7 +70,7 @@ tmr.registerMock("typed-rest-client/RestClient", {
         ) {
           return {
             result: {
-              count: 1,
+              count: 2,
               value: [
                 {
                   id: "0cd358e1-9217-4d94-8269-1c1ee6f93dcf",
@@ -103,7 +103,7 @@ tmr.registerMock("typed-rest-client/RestClient", {
         ) {
           return {
             result: {
-              count: 0,
+              count: 1,
               value: [
                 {
                   id: "9946fd70-0d40-406e-b686-b4744cbbcc37",

@@ -5,7 +5,7 @@ import { stubConstructor } from "ts-sinon";
 
 import { CommitMessageProvider } from "@/commit.message.provider";
 import { CommitExtractor } from "@/commit.extractor";
-import { Logger } from "../../src/logger";
+import { Logger } from "@/logger";
 
 describe("Commit extractor", function () {
   const dummyProject = "dummyProject";
