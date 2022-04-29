@@ -1,6 +1,4 @@
 import chai = require("chai");
-// import chaiAzure = require("../util/chai-azure");
-// chai.use(chaiAzure);
 const expect = chai.expect;
 
 import * as path from "path";
@@ -21,9 +19,9 @@ describe("Extract Jira keys", function () {
     }
   }
 
-  it("should succeed with given values", function (done: Mocha.Done) {
+  it("should succeed and publish environment variable with collected jira keys", function (done: Mocha.Done) {
     // given
-    this.timeout(100000);
+    this.timeout(5000);
 
     const tp: string = path.join(__dirname, "setup.js");
     const tr: ttm.MockTestRunner = new ttm.MockTestRunner(tp);

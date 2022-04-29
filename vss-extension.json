@@ -1,7 +1,7 @@
 {
   "manifestVersion": 1,
   "id": "jira-issue-extractor",
-  "name": "Jira keys Tools",
+  "name": "Jira Issue Extractor",
   "version": "1.0.0",
   "publisher": "AttilaHajdu",
   "targets": [
@@ -9,7 +9,7 @@
       "id": "Microsoft.VisualStudio.Services"
     }
   ],
-  "description": "Tools for handling Jira keys.",
+  "description": "Tools for handling Jira keys from Git.",
   "categories": ["Azure Pipelines"],
   "icons": {
     "default": "images/extension-icon.png"
