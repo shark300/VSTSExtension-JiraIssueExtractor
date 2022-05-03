@@ -7,6 +7,7 @@ import {
   Build,
   BuildReason,
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
+import { GitCommitRef } from "azure-devops-node-api/interfaces/GitInterfaces";
 
 const taskPath = path.join(__dirname, "..", "..", "dist", "index.js");
 const tmr: tmrm.TaskMockRunner = new tmrm.TaskMockRunner(taskPath);
@@ -103,7 +104,7 @@ tmr.registerMock("typed-rest-client/RestClient", {
         ) {
           return {
             result: {
-              count: 1,
+              count: 2,
               value: [
                 {
                   id: "9946fd70-0d40-406e-b686-b4744cbbcc37",
@@ -111,6 +112,17 @@ tmr.registerMock("typed-rest-client/RestClient", {
                   resourceName: "pullRequests",
                   routeTemplate:
                     "{project}/_apis/{area}/repositories/{repositoryId}/{resource}/{pullRequestId}",
+                  resourceVersion: 1,
+                  minVersion: "1.0",
+                  maxVersion: "7.1",
+                  releasedVersion: "7.0",
+                },
+                {
+                  id: "c2570c3b-5b3f-41b8-98bf-5407bfde8d58",
+                  area: "git",
+                  resourceName: "commits",
+                  routeTemplate:
+                    "{project}/_apis/{area}/repositories/{repositoryId}/{resource}/{commitId}",
                   resourceVersion: 1,
                   minVersion: "1.0",
                   maxVersion: "7.1",
@@ -125,7 +137,11 @@ tmr.registerMock("typed-rest-client/RestClient", {
       },
       get: async function (
         resource: string
-      ): Promise<IRestResponse<ConnectionData | IWebApiArrayResult | Build>> {
+      ): Promise<
+        IRestResponse<
+          ConnectionData | IWebApiArrayResult | Build | GitCommitRef
+        >
+      > {
         if (
           resource ===
           "https://my-azure-server/myorganization/_apis/connectionData"
@@ -178,9 +194,20 @@ tmr.registerMock("typed-rest-client/RestClient", {
               value: [
                 {
                   id: "4d59d256f331c8e2a4bf453d33c94f868426a0b4",
-                  message: "JIE-1257: sample commit message",
+                  message: "multi line commit",
                 },
               ],
+            },
+            statusCode: 200,
+            headers: [],
+          };
+        } else if (
+          resource ===
+          "https://my-azure-server/myorganization/_apis/git/repositories/a152bef2-0262-420e-b829-aa2299c34158/commits/4d59d256f331c8e2a4bf453d33c94f868426a0b4"
+        ) {
+          return {
+            result: {
+              comment: "multi line commit\nJIE-1257: sample commit message",
             },
             statusCode: 200,
             headers: [],
