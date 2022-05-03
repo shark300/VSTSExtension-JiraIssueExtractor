@@ -12,8 +12,10 @@ import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import {
   Build,
   BuildReason,
+  BuildRepository,
   Change,
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
+import { IGitApi } from "azure-devops-node-api/GitApi";
 
 import { CommitMessageProvider } from "@/commit.message.provider";
 import { Pipeline } from "@/pipeline";
@@ -22,7 +24,10 @@ import { Logger } from "@/logger";
 describe("Commit message provider", function () {
   const dummyProject = "dummyProject";
   const dummyBuildId = 1;
+  const dummyBuildRepositoryId = "dummyBuildRepositoryId";
 
+  const firstCommitHash = "firstCommitHash";
+  const secondCommitHash = "secondCommitHash";
   const firstMessage = "firstMessage";
   const secondMessage = "secondMessage";
 
@@ -33,31 +38,49 @@ describe("Commit message provider", function () {
 
   const webApiMock = createStubInstance(WebApi);
   const buildApiMock = stubInterface<IBuildApi>();
-
-  const invalidMessage: Change = {};
+  const gitApiMock = stubInterface<IGitApi>();
 
   const firstValidChange: Change = {
+    id: firstCommitHash,
     message: firstMessage,
   };
   const secondValidChange: Change = {
+    id: secondCommitHash,
     message: secondMessage,
   };
 
   let build: Build = {};
+  let buildRepository: BuildRepository = {};
 
   beforeEach(() => {
     commitMessageProvider = new CommitMessageProvider(pipelineMock, loggerMock);
 
+    buildRepository = {
+      id: dummyBuildRepositoryId,
+      type: "TfsGit",
+    };
+
     build = {
+      repository: buildRepository,
       reason: BuildReason.IndividualCI,
     };
 
     pipelineMock.getWebApi.resolves(webApiMock);
     webApiMock.getBuildApi.resolves(buildApiMock);
+    webApiMock.getGitApi.resolves(gitApiMock);
     buildApiMock.getBuild.withArgs(dummyProject, dummyBuildId).resolves(build);
+
     buildApiMock.getBuildChanges
       .withArgs(dummyProject, dummyBuildId)
       .resolves([firstValidChange, secondValidChange]);
+
+    gitApiMock.getCommit
+      .withArgs(firstCommitHash, dummyBuildRepositoryId)
+      .resolves({ comment: firstMessage });
+
+    gitApiMock.getCommit
+      .withArgs(secondCommitHash, dummyBuildRepositoryId)
+      .resolves({ comment: secondMessage });
   });
 
   describe("getCommitMessages", function () {
@@ -89,22 +112,6 @@ describe("Commit message provider", function () {
 
       // then
       expect(actual).to.have.members([firstMessage, secondMessage]);
-    });
-
-    it("should filter out invalid commit", async function () {
-      // given
-      buildApiMock.getBuildChanges
-        .withArgs(dummyProject, dummyBuildId)
-        .resolves([invalidMessage, firstValidChange]);
-
-      // when
-      const actual = await commitMessageProvider.getCommitMessages(
-        dummyProject,
-        dummyBuildId
-      );
-
-      // then
-      expect(actual).to.have.members([firstMessage]);
     });
   });
 });
