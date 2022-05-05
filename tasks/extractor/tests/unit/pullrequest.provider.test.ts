@@ -18,10 +18,10 @@ import {
   GitPullRequest,
   PullRequestStatus,
 } from "azure-devops-node-api/interfaces/GitInterfaces";
+import { Logger } from "winston";
 
 import { PullRequestProvider } from "@/pullrequest.provider";
 import { Pipeline } from "@/pipeline";
-import { Logger } from "@/logger";
 
 describe("Pull Request provider", function () {
   const dummyProject = "dummyProject";
@@ -35,7 +35,7 @@ describe("Pull Request provider", function () {
   let branchNameProvider: PullRequestProvider;
 
   const pipelineMock = stubConstructor(Pipeline);
-  const loggerMock = stubConstructor(Logger);
+  const loggerMock = stubInterface<Logger>();
 
   const webApiMock = stubInterface<WebApi>();
   const buildApiMock = stubInterface<IBuildApi>();

@@ -1,4 +1,5 @@
 import tl = require("azure-pipelines-task-lib/task");
+import { createLogger, format, transports } from "winston";
 
 import { Pipeline } from "@/pipeline";
 import { BranchExtractor } from "@/branch.extractor";
@@ -7,25 +8,61 @@ import { PullRequestProvider } from "@/pullrequest.provider";
 import { CommitMessageProvider } from "@/commit.message.provider";
 import { CommitExtractor } from "@/commit.extractor";
 import { ExtractorService } from "@/extractor.service";
-import { Logger } from "@/logger";
 
 async function run() {
   try {
-    const pipeline = new Pipeline();
-    const logger = new Logger();
+    const myFormat = format.printf(
+      ({ level, message, component, timestamp }) => {
+        if (component) {
+          return `${timestamp} ${level} [component: ${component}]: ${message}`;
+        }
+        return `${timestamp} ${level} []: ${message}`;
+      }
+    );
 
-    logger.banner(`Extracting Jira keys from current build`);
+    const mainLogger = createLogger({
+      level: "info",
+      format: format.combine(
+        format.colorize({ all: true }),
+        format.timestamp({
+          format: "YYYY-MM-DD HH:mm:ss.SSS",
+        }),
+        format.errors({ stack: true }),
+        format.splat(),
+        myFormat
+      ),
+      transports: [new transports.Console()],
+    });
 
-    const pullRequestProvider = new PullRequestProvider(pipeline, logger);
+    const branchNameLogger = mainLogger.child({ component: "branchName" });
+    const commitsLogger = mainLogger.child({ component: "commits" });
+
+    const pipeline = new Pipeline(mainLogger);
+
+    mainLogger.info("Extracting Jira keys from current build");
+
+    const pullRequestProvider = new PullRequestProvider(
+      pipeline,
+      branchNameLogger
+    );
 
     const branchNameProvider = new BranchNameProvider(
       pullRequestProvider,
-      logger
+      branchNameLogger
     );
-    const branchExtractor = new BranchExtractor(branchNameProvider, logger);
+    const branchExtractor = new BranchExtractor(
+      branchNameProvider,
+      branchNameLogger
+    );
 
-    const commitMessageProvider = new CommitMessageProvider(pipeline, logger);
-    const commitExtractor = new CommitExtractor(commitMessageProvider, logger);
+    const commitMessageProvider = new CommitMessageProvider(
+      pipeline,
+      commitsLogger
+    );
+    const commitExtractor = new CommitExtractor(
+      commitMessageProvider,
+      commitsLogger
+    );
 
     const extractorService = new ExtractorService([
       branchExtractor,
@@ -37,9 +74,9 @@ async function run() {
       pipeline.getBuildId()
     );
 
-    logger.log(`All extracted Jira keys: ${jiraKeys}`);
+    mainLogger.info("All extracted Jira keys: %s", jiraKeys);
 
-    logger.log(`Publishing variable`);
+    mainLogger.info("Publishing variable");
 
     tl.setVariable("JIRA_KEYS", jiraKeys);
   } catch (err) {
