@@ -1,11 +1,14 @@
 import * as vm from "azure-devops-node-api";
 import * as lim from "azure-devops-node-api/interfaces/LocationsInterfaces";
+import * as winston from "winston";
 
 export class Pipeline {
+  constructor(public logger: winston.Logger) {}
+
   getEnv(name: string): string {
     const val = process.env[name];
     if (!val) {
-      console.error(`${name} env var not set`);
+      this.logger.error("%s env var not set", name);
       process.exit(1);
     }
     return val;
@@ -23,8 +26,9 @@ export class Pipeline {
 
     const vsts: vm.WebApi = new vm.WebApi(serverUrl, authHandler, option);
     const connData: lim.ConnectionData = await vsts.connect();
-    console.log(
-      `Welcome to ${connData.authenticatedUser?.providerDisplayName}`
+    this.logger.info(
+      "Welcome to %s",
+      connData.authenticatedUser?.providerDisplayName
     );
     return vsts;
   }

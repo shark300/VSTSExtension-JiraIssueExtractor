@@ -16,10 +16,10 @@ import {
   Change,
 } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import { IGitApi } from "azure-devops-node-api/GitApi";
+import { Logger } from "winston";
 
 import { CommitMessageProvider } from "@/commit.message.provider";
 import { Pipeline } from "@/pipeline";
-import { Logger } from "@/logger";
 
 describe("Commit message provider", function () {
   const dummyProject = "dummyProject";
@@ -34,7 +34,7 @@ describe("Commit message provider", function () {
   let commitMessageProvider: CommitMessageProvider;
 
   const pipelineMock = stubConstructor(Pipeline);
-  const loggerMock = stubConstructor(Logger);
+  const loggerMock = stubInterface<Logger>();
 
   const webApiMock = createStubInstance(WebApi);
   const buildApiMock = stubInterface<IBuildApi>();

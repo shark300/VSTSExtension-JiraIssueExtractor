@@ -1,16 +1,19 @@
+import * as winston from "winston";
+
 import { BranchNameProvider } from "@/branch.name.provider";
 import { IExtractApi } from "@/ExtractApi";
-import { Logger } from "@/logger";
 
 export class BranchExtractor implements IExtractApi {
   constructor(
     public branchNameProvider: BranchNameProvider,
-    public logger: Logger
+    public logger: winston.Logger
   ) {}
 
   async getJiraKeys(project: string, buildId: number): Promise<string[]> {
-    this.logger.heading(
-      `Extracting Jira keys from branch for ${project} with buildId: ${buildId}`
+    this.logger.info(
+      "Extracting Jira keys from branch for %s with buildId: %s",
+      project,
+      buildId
     );
 
     const branchName = await this.branchNameProvider.getBranchName(
@@ -19,7 +22,7 @@ export class BranchExtractor implements IExtractApi {
     );
     const jiraKeys = this.extractJiraKeys(branchName);
 
-    this.logger.log(`Extracted Jira keys from branch: ${jiraKeys}`);
+    this.logger.info("Extracted Jira keys from branch: %s", jiraKeys);
     return jiraKeys;
   }
 

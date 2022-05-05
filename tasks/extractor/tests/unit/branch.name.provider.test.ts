@@ -1,13 +1,13 @@
 import chai = require("chai");
 const expect = chai.expect;
 
-import { stubConstructor } from "ts-sinon";
+import { stubConstructor, stubInterface } from "ts-sinon";
 
 import { GitPullRequest } from "azure-devops-node-api/interfaces/GitInterfaces";
+import { Logger } from "winston";
 
 import { BranchNameProvider } from "@/branch.name.provider";
 import { PullRequestProvider } from "@/pullrequest.provider";
-import { Logger } from "@/logger";
 
 describe("Branch name provider", function () {
   const dummyProject = "dummyProject";
@@ -17,7 +17,7 @@ describe("Branch name provider", function () {
   let branchNameProvider: BranchNameProvider;
 
   const pullRequestProviderMock = stubConstructor(PullRequestProvider);
-  const loggerMock = stubConstructor(Logger);
+  const loggerMock = stubInterface<Logger>();
 
   let gitPullRequest: GitPullRequest = {};
 

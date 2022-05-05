@@ -1,15 +1,18 @@
+import * as winston from "winston";
+
 import { PullRequestProvider } from "@/pullrequest.provider";
-import { Logger } from "@/logger";
 
 export class BranchNameProvider {
   constructor(
     public pullRequestProvider: PullRequestProvider,
-    public logger: Logger
+    public logger: winston.Logger
   ) {}
 
   async getBranchName(project: string, buildId: number): Promise<string> {
-    this.logger.heading(
-      `Getting branch for ${project} with buildId: ${buildId}`
+    this.logger.info(
+      "Getting branch for %s with buildId: %s",
+      project,
+      buildId
     );
 
     const pullRequest = await this.pullRequestProvider.getPullRequest(
@@ -18,7 +21,7 @@ export class BranchNameProvider {
     );
     const branchName = pullRequest?.sourceRefName as string;
 
-    this.logger.log(`Found branch: ${branchName}`);
+    this.logger.info("Found branch: %s", branchName);
     return branchName;
   }
 }

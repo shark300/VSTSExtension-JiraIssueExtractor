@@ -1,11 +1,12 @@
 import chai = require("chai");
 const expect = chai.expect;
 
-import { stubConstructor } from "ts-sinon";
+import { stubConstructor, stubInterface } from "ts-sinon";
+
+import { Logger } from "winston";
 
 import { CommitMessageProvider } from "@/commit.message.provider";
 import { CommitExtractor } from "@/commit.extractor";
-import { Logger } from "@/logger";
 
 describe("Commit extractor", function () {
   const dummyProject = "dummyProject";
@@ -14,7 +15,7 @@ describe("Commit extractor", function () {
   let branchNameExtractor: CommitExtractor;
 
   const commitMessageProviderMock = stubConstructor(CommitMessageProvider);
-  const loggerMock = stubConstructor(Logger);
+  const loggerMock = stubInterface<Logger>();
 
   beforeEach(() => {
     branchNameExtractor = new CommitExtractor(
