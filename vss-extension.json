@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "jira-issue-extractor",
   "name": "Jira Issue Extractor",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publisher": "AttilaHajdu",
   "targets": [
     {
@@ -28,5 +28,14 @@
         "name": "tasks/extractor"
       }
     }
-  ]
+  ],
+  "content": {
+    "details": {
+      "path": "README.md"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "uri": "https://github.com/shark300/VSTSExtension-JiraIssueExtractor"
+  }
 }
