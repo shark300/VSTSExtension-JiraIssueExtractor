@@ -10,7 +10,7 @@ describe("Extract Jira keys", function () {
     variableName: string
   ): string | undefined {
     const parseVariableValue = new RegExp(
-      `##vso\\[task\\.setvariable variable=${variableName};isOutput=false;issecret=false;\\](.*)$`,
+      `##vso\\[task\\.setvariable variable=${variableName};isOutput=true;issecret=false;\\](.*)$`,
       "m"
     );
     const match = testRunner.stdout.match(parseVariableValue);
@@ -33,7 +33,7 @@ describe("Extract Jira keys", function () {
     expect(tr.succeeded).to.equals(true, "should have succeeded");
     expect(tr.warningIssues.length).to.equals(0, "should have no warnings");
     expect(tr.errorIssues.length).to.equals(0, "should have no errors");
-    expect(getVariable(tr, "JIRA_KEYS")).to.equal("JIE-541, JIE-1257");
+    expect(getVariable(tr, "Jira.Keys")).to.equal("JIE-541, JIE-1257");
     console.log(tr.stdout);
     done();
   });

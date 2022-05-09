@@ -3,7 +3,7 @@
 ### Jira Key Publishing From Multiple Sources
 
 JiraIssueKeyExtractor task extracts Jira Keys from Pull Request's branch name and commits of the build. The extracted
-values will be propagated as `JIRA_KEYS` environment variable.
+values will be propagated as `Jira.Keys` variable.
 
 ## Jira Issue Extractor Azure DevOps Marketplace Extension Details
 
