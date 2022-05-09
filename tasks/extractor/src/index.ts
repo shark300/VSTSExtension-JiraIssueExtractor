@@ -78,7 +78,7 @@ async function run() {
 
     mainLogger.info("Publishing variable");
 
-    tl.setVariable("JIRA_KEYS", jiraKeys);
+    tl.setVariable("JIRA_KEYS", jiraKeys, false, true);
   } catch (err) {
     tl.setResult(tl.TaskResult.Failed, err.message);
   }

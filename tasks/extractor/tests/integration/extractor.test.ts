@@ -10,7 +10,7 @@ describe("Extract Jira keys", function () {
     variableName: string
   ): string | undefined {
     const parseVariableValue = new RegExp(
-      `##vso\\[task\\.setvariable variable=${variableName};isOutput=false;issecret=false;\\](.*)$`,
+      `##vso\\[task\\.setvariable variable=${variableName};isOutput=true;issecret=false;\\](.*)$`,
       "m"
     );
     const match = testRunner.stdout.match(parseVariableValue);
