@@ -7,8 +7,8 @@ values will be propagated as `Jira.Keys` variable.
 
 ## Jira Issue Extractor Azure DevOps Marketplace Extension Details
 
-This extension provides Pull Request's branch name and commits analysis and publishing Jira Keys. IndiviualCI is the
-only supported way of extraction.
+This extension provides Pull Request's branch name and commits analysis and publishing Jira Keys. IndiviualCI and
+TfsGit is the only supported way of extraction.
 
 Integration sample for Build Pipeline:
 

@@ -3,6 +3,8 @@ const expect = chai.expect;
 
 import { stubInterface } from "ts-sinon";
 
+import { Logger } from "winston";
+
 import { IExtractApi } from "@/ExtractApi";
 import { ExtractorService } from "@/extractor.service";
 
@@ -12,14 +14,16 @@ describe("Extractor service", function () {
 
   let extractorService: ExtractorService;
 
+  const loggerMock = stubInterface<Logger>();
+
   const firstExtractorMock = stubInterface<IExtractApi>();
   const secondExtractorMock = stubInterface<IExtractApi>();
 
   beforeEach(() => {
-    extractorService = new ExtractorService([
-      firstExtractorMock,
-      secondExtractorMock,
-    ]);
+    extractorService = new ExtractorService(
+      [firstExtractorMock, secondExtractorMock],
+      loggerMock
+    );
   });
 
   describe("getJiraKeys", function () {
@@ -78,6 +82,25 @@ describe("Extractor service", function () {
 
       // then
       expect(actual).to.equals("JIE-540, JIE-1257");
+    });
+
+    it("should swallow errors from extractors' results", async function () {
+      // given
+      firstExtractorMock.getJiraKeys
+        .withArgs(dummyProject, dummyBuildId)
+        .resolves(["JIE-540"]);
+      secondExtractorMock.getJiraKeys
+        .withArgs(dummyProject, dummyBuildId)
+        .rejects(new Error());
+
+      // when
+      const actual = await extractorService.getJiraKeys(
+        dummyProject,
+        dummyBuildId
+      );
+
+      // then
+      expect(actual).to.equals("JIE-540");
     });
   });
 });

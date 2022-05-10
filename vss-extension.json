@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "jira-issue-extractor",
   "name": "Jira Issue Extractor",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "publisher": "AttilaHajdu",
   "targets": [
     {
@@ -32,6 +32,9 @@
   "content": {
     "details": {
       "path": "README.md"
+    },
+    "license": {
+      "path": "LICENSE"
     }
   },
   "repository": {

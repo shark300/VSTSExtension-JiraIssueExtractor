@@ -59,8 +59,10 @@ export class PullRequestProvider {
       );
       return firstMatchingPullRequestForBuild;
     } else {
-      throw Error(
-        `Pull Request not found for ${project} project and ${buildId} buildId`
+      return Promise.reject(
+        new Error(
+          `Pull Request not found for ${project} project and ${buildId} buildId`
+        )
       );
     }
   }

@@ -12,12 +12,6 @@ import { GitCommitRef } from "azure-devops-node-api/interfaces/GitInterfaces";
 const taskPath = path.join(__dirname, "..", "..", "dist", "index.js");
 const tmr: tmrm.TaskMockRunner = new tmrm.TaskMockRunner(taskPath);
 
-process.env["SYSTEM_TEAMPROJECT"] = "myproject";
-process.env["BUILD_BUILDID"] = "1";
-process.env["SYSTEM_TEAMFOUNDATIONCOLLECTIONURI"] =
-  "https://my-azure-server/myorganization/";
-process.env["SYSTEM_ACCESSTOKEN"] = "token";
-
 tmr.registerMock("typed-rest-client/RestClient", {
   RestClient: function () {
     return {
@@ -186,6 +180,23 @@ tmr.registerMock("typed-rest-client/RestClient", {
           };
         } else if (
           resource ===
+          "https://my-azure-server/myorganization/myproject/_apis/build/Builds/2"
+        ) {
+          return {
+            result: {
+              sourceBranch: "refs/heads/master",
+              sourceVersion: "0350ba5886c683e8b77c3c68f72dd043acca1f79",
+              reason: BuildReason.IndividualCI,
+              repository: {
+                id: "a152bef2-0262-420e-b829-aa2299c34158",
+                type: "TfsGit",
+              },
+            },
+            statusCode: 200,
+            headers: [],
+          };
+        } else if (
+          resource ===
           "https://my-azure-server/myorganization/myproject/_apis/build/builds/1/changes"
         ) {
           return {
@@ -194,7 +205,22 @@ tmr.registerMock("typed-rest-client/RestClient", {
               value: [
                 {
                   id: "4d59d256f331c8e2a4bf453d33c94f868426a0b4",
-                  message: "multi line commit",
+                },
+              ],
+            },
+            statusCode: 200,
+            headers: [],
+          };
+        } else if (
+          resource ===
+          "https://my-azure-server/myorganization/myproject/_apis/build/builds/2/changes"
+        ) {
+          return {
+            result: {
+              count: 1,
+              value: [
+                {
+                  id: "ac7ed5ee840c7748ee060f72b45fdd51a529beb5",
                 },
               ],
             },
@@ -208,6 +234,17 @@ tmr.registerMock("typed-rest-client/RestClient", {
           return {
             result: {
               comment: "multi line commit\nJIE-1257: sample commit message",
+            },
+            statusCode: 200,
+            headers: [],
+          };
+        } else if (
+          resource ===
+          "https://my-azure-server/myorganization/_apis/git/repositories/a152bef2-0262-420e-b829-aa2299c34158/commits/ac7ed5ee840c7748ee060f72b45fdd51a529beb5"
+        ) {
+          return {
+            result: {
+              comment: "JIE-1349: sample commit message",
             },
             statusCode: 200,
             headers: [],

@@ -64,10 +64,10 @@ async function run() {
       commitsLogger
     );
 
-    const extractorService = new ExtractorService([
-      branchExtractor,
-      commitExtractor,
-    ]);
+    const extractorService = new ExtractorService(
+      [branchExtractor, commitExtractor],
+      mainLogger
+    );
 
     const jiraKeys = await extractorService.getJiraKeys(
       pipeline.getProject(),
