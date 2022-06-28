@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "jira-issue-extractor",
   "name": "Jira Issue Extractor",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "publisher": "AttilaHajdu",
   "targets": [
     {
