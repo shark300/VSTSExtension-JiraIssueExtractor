@@ -10,6 +10,7 @@
     }
   ],
   "description": "Tools for handling Jira keys from Git.",
+  "public": true,
   "categories": ["Azure Pipelines"],
   "icons": {
     "default": "images/extension-icon.png"
