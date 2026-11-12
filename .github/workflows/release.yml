@@ -172,8 +172,7 @@ jobs:
             --output-path "dist/$VSIX_PREFIX-$VERSION.vsix" \
             --no-prompt
           test -s "dist/$VSIX_PREFIX-$VERSION.vsix"
-          test "$(git show HEAD:vss-extension.json | sha256sum | cut -d' ' -f1)" = \
-               "$(sha256sum vss-extension.json | cut -d' ' -f1)"
+          git diff --exit-code -- vss-extension.json
 
       - name: Verify source-built VSIX content against the baseline
         shell: bash
