@@ -12,7 +12,10 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: bash
     outputs:
       version: ${{ steps.version.outputs.version }}
       base_version: ${{ steps.version.outputs.base_version }}
@@ -95,6 +98,9 @@ jobs:
           cache: npm
           cache-dependency-path: tasks/extractor/package-lock.json
 
+      - name: Use npm 8 for the repository's npm lockfile v2
+        run: npm install --global npm@8.19.4
+
       - name: Install locked task dependencies
         run: npm ci --no-audit --no-fund
         working-directory: tasks/extractor
@@ -109,6 +115,46 @@ jobs:
       - name: Prune development-only dependencies before packaging
         run: npm prune --omit=dev --no-audit --no-fund
         working-directory: tasks/extractor
+
+      - name: Download the previous published VSIX for comparison only
+        shell: bash
+        env:
+          BASE_VERSION: ${{ steps.version.outputs.base_version }}
+        run: |
+          set -euo pipefail
+          mkdir -p baseline
+          gh release download "$BASE_VERSION" \
+            --pattern "$VSIX_PREFIX-$BASE_VERSION.vsix" \
+            --dir baseline
+          test -s "baseline/$VSIX_PREFIX-$BASE_VERSION.vsix"
+
+      - name: Exclude files absent from the previous release payload
+        shell: bash
+        env:
+          BASE_VERSION: ${{ steps.version.outputs.base_version }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          old = Path('baseline') / (os.environ['VSIX_PREFIX'] + '-' + os.environ['BASE_VERSION'] + '.vsix')
+          root = Path('tasks/extractor')
+          with ZipFile(old) as archive:
+              allowed = set(archive.namelist())
+          removed = []
+          for path in root.rglob('*'):
+              if path.is_file() or path.is_symlink():
+                  name = path.as_posix()
+                  if name not in allowed:
+                      path.unlink()
+                      removed.append(name)
+          for path in sorted((p for p in root.rglob('*') if p.is_dir()), key=lambda p: len(p.parts), reverse=True):
+              if not any(path.iterdir()):
+                  path.rmdir()
+          print('Removed build-time files that were not in the released payload:')
+          print('\n'.join(removed))
+          PY
 
       - name: Install pinned Azure DevOps VSIX packager
         run: npm install --global tfx-cli@0.24.2 --no-audit --no-fund
@@ -128,18 +174,6 @@ jobs:
           test -s "dist/$VSIX_PREFIX-$VERSION.vsix"
           test "$(git show HEAD:vss-extension.json | sha256sum | cut -d' ' -f1)" = \
                "$(sha256sum vss-extension.json | cut -d' ' -f1)"
-
-      - name: Download the previous published VSIX for comparison only
-        shell: bash
-        env:
-          BASE_VERSION: ${{ steps.version.outputs.base_version }}
-        run: |
-          set -euo pipefail
-          mkdir -p baseline
-          gh release download "$BASE_VERSION" \
-            --pattern "$VSIX_PREFIX-$BASE_VERSION.vsix" \
-            --dir baseline
-          test -s "baseline/$VSIX_PREFIX-$BASE_VERSION.vsix"
 
       - name: Verify source-built VSIX content against the baseline
         shell: bash
