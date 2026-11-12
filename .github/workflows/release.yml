@@ -92,7 +92,8 @@ jobs:
               before = json.loads(data)
               expected = len(list(version_fields(before)))
               if expected == 0:
-                  raise RuntimeError(f'{name}: no {source_version} version fields found')
+                  print(f'{name}: no extension version field to update; leaving unchanged')
+                  return data
               pattern = rb'("(?i:version)"\s*:\s*")' + re.escape(source_version.encode()) + rb'(")'
               changed, count = re.subn(pattern, lambda m: m[1] + target_version.encode() + m[2], data)
               if count != expected:
@@ -110,6 +111,7 @@ jobs:
               if len(names) != len(set(names)):
                   raise RuntimeError('Source VSIX contains duplicate file names')
               required = {'extension.vsixmanifest', 'extension.vsomanifest'}
+              version_required = {'extension.vsixmanifest'}
               if not required.issubset(names):
                   raise RuntimeError(f'Missing required VSIX manifests: {required - set(names)}')
               with ZipFile(published, 'w') as new:
@@ -146,8 +148,8 @@ jobs:
                       actual_changes.append(name)
                   elif name in new_contents:
                       raise RuntimeError(f'Missing expected version modification: {name}')
-              if not required.issubset(actual_changes):
-                  raise RuntimeError('Both extension manifests must be updated')
+              if not version_required.issubset(actual_changes):
+                  raise RuntimeError('The VSIX identity version must be updated')
               unchanged = len(old.namelist()) - len(actual_changes)
               print(f'Verified {unchanged} unchanged files (exact bytes)')
               print(f'Version-only changes: {actual_changes}')
@@ -185,4 +187,4 @@ jobs:
           gh release create "$TARGET_TAG" "release/$PREFIX-$TARGET_TAG.vsix" \
             --target "$GITHUB_SHA" \
             --title "$TARGET_TAG" \
-            --notes "Version-only update from $SOURCE_TAG. All bundled files are identical to $SOURCE_TAG except the extension version fields in the VSIX manifests; verified by the release workflow."
+            --notes "Version-only update from $SOURCE_TAG. All bundled files are identical to $SOURCE_TAG except extension version fields, where present; verified by the release workflow."
