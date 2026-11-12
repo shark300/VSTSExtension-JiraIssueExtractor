@@ -1,0 +1,174 @@
+name: Release VSIX (version-only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_tag:
+        description: Existing GitHub release to use as the byte-for-byte payload baseline
+        required: true
+        default: '1.2.1'
+        type: string
+      target_tag:
+        description: New extension version / GitHub release tag
+        required: true
+        default: '1.2.2'
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/release.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: vsix-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      SOURCE_TAG: ${{ inputs.source_tag || '1.2.1' }}
+      TARGET_TAG: ${{ inputs.target_tag || '1.2.2' }}
+      PREFIX: AttilaHajdu.jira-issue-extractor
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+
+    steps:
+      - name: Validate versions and check for an existing release
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          [[ "$TARGET_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          [[ "$SOURCE_TAG" != "$TARGET_TAG" ]]
+          if gh release view "$TARGET_TAG" >/dev/null 2>&1; then
+            echo "::error::Release $TARGET_TAG already exists; refusing to overwrite it."
+            exit 1
+          fi
+
+      - name: Download the original published VSIX
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          gh release download "$SOURCE_TAG" \
+            --pattern "$PREFIX-$SOURCE_TAG.vsix" \
+            --dir release
+          test -s "release/$PREFIX-$SOURCE_TAG.vsix"
+
+      - name: Change only the packaged extension version and verify every file
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import re
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          source_version = os.environ['SOURCE_TAG']
+          target_version = os.environ['TARGET_TAG']
+          prefix = os.environ['PREFIX']
+          original = Path('release') / f'{prefix}-{source_version}.vsix'
+          published = Path('release') / f'{prefix}-{target_version}.vsix'
+          new_contents = {}
+
+          def change_json_version(name, data):
+              old = json.loads(data)
+              if old.get('version') != source_version:
+                  raise RuntimeError(f'{name}: unexpected source version: {old.get("version")}')
+              pattern = rb'("version"\s*:\s*")' + re.escape(source_version.encode()) + rb'(")'
+              changed, count = re.subn(pattern, lambda m: m[1] + target_version.encode() + m[2], data)
+              if count != 1 or json.loads(changed).get('version') != target_version:
+                  raise RuntimeError(f'{name}: expected exactly one root version change, found {count}')
+              return changed
+
+          with ZipFile(original) as old:
+              if old.testzip() is not None:
+                  raise RuntimeError('Source VSIX has a damaged ZIP member')
+              infos = old.infolist()
+              names = [i.filename for i in infos]
+              if len(names) != len(set(names)):
+                  raise RuntimeError('Source VSIX contains duplicate file names')
+              required = {'extension.vsixmanifest', 'extension.vsomanifest'}
+              if not required.issubset(names):
+                  raise RuntimeError(f'Missing required VSIX manifests: {required - set(names)}')
+              with ZipFile(published, 'w') as new:
+                  new.comment = old.comment
+                  for info in infos:
+                      data = old.read(info)
+                      if info.filename == 'extension.vsixmanifest':
+                          xml = ET.fromstring(data)
+                          identities = [e for e in xml.iter() if e.tag.rsplit('}', 1)[-1] == 'Identity']
+                          if len(identities) != 1 or identities[0].get('Version') != source_version:
+                              raise RuntimeError('Unexpected VSIX Identity version')
+                          pattern = rb'(\bVersion\s*=\s*["\'])' + re.escape(source_version.encode()) + rb'(["\'])'
+                          changed, count = re.subn(pattern, lambda m: m[1] + target_version.encode() + m[2], data)
+                          if count != 1:
+                              raise RuntimeError('Expected exactly one VSIX Identity version change')
+                          data = changed
+                      elif info.filename == 'extension.vsomanifest':
+                          data = change_json_version(info.filename, data)
+                      elif info.filename == 'vss-extension.json':
+                          data = change_json_version(info.filename, data)
+                      if data != old.read(info):
+                          new_contents[info.filename] = data
+                      new.writestr(info, data)
+
+          with ZipFile(original) as old, ZipFile(published) as new:
+              if new.testzip() is not None or old.namelist() != new.namelist():
+                  raise RuntimeError('Bad output VSIX or changed file list/order')
+              actual_changes = []
+              for name in old.namelist():
+                  before, after = old.read(name), new.read(name)
+                  if before != after:
+                      if name not in new_contents or after != new_contents[name]:
+                          raise RuntimeError(f'Unexpected modification: {name}')
+                      actual_changes.append(name)
+                  elif name in new_contents:
+                      raise RuntimeError(f'Missing expected version modification: {name}')
+              if not required.issubset(actual_changes):
+                  raise RuntimeError('Both extension manifests must be updated')
+              unchanged = len(old.namelist()) - len(actual_changes)
+              print(f'Verified {unchanged} unchanged files (exact bytes)')
+              print(f'Version-only changes: {actual_changes}')
+              print(f'Original VSIX: {original.stat().st_size} bytes')
+              print(f'New VSIX: {published.stat().st_size} bytes')
+              print(f'New SHA256: {hashlib.sha256(published.read_bytes()).hexdigest()}')
+              with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as report:
+                  report.write(f'### VSIX comparison: {source_version} → {target_version}\n\n')
+                  report.write(f'- {unchanged} files **byte-for-byte identical** inside both VSIX archives\n')
+                  report.write(f'- Version-only metadata updates: {", ".join(actual_changes)}\n')
+                  report.write(f'- Original size: {original.stat().st_size} bytes; new size: {published.stat().st_size} bytes\n')
+          PY
+
+      - name: Publish to Visual Studio Marketplace when credentials exist
+        shell: bash
+        env:
+          MARKETPLACE_PAT: ${{ secrets.MARKETPLACE_PAT }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$MARKETPLACE_PAT" ]]; then
+            echo '::notice::Marketplace publish skipped: configure the MARKETPLACE_PAT repository secret with Marketplace (Publish) scope.'
+            echo '- Marketplace: skipped (MARKETPLACE_PAT secret not configured)' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          npm install --global tfx-cli
+          tfx extension publish --publisher AttilaHajdu \
+            --vsix "release/$PREFIX-$TARGET_TAG.vsix" \
+            --auth-type pat --token "$MARKETPLACE_PAT" --no-prompt
+          echo '- Marketplace: published successfully' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish the VSIX as a GitHub Release
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$TARGET_TAG" "release/$PREFIX-$TARGET_TAG.vsix" \
+            --target "$GITHUB_SHA" \
+            --title "$TARGET_TAG" \
+            --notes "Version-only update from $SOURCE_TAG. All bundled files are identical to $SOURCE_TAG except the extension version fields in the VSIX manifests; verified by the release workflow."
