@@ -79,13 +79,27 @@ jobs:
           new_contents = {}
 
           def change_json_version(name, data):
-              old = json.loads(data)
-              if old.get('version') != source_version:
-                  raise RuntimeError(f'{name}: unexpected source version: {old.get("version")}')
-              pattern = rb'("version"\s*:\s*")' + re.escape(source_version.encode()) + rb'(")'
+              def version_fields(value):
+                  if isinstance(value, dict):
+                      for key, item in value.items():
+                          if key.lower() == 'version' and isinstance(item, str) and item == source_version:
+                              yield item
+                          yield from version_fields(item)
+                  elif isinstance(value, list):
+                      for item in value:
+                          yield from version_fields(item)
+
+              before = json.loads(data)
+              expected = len(list(version_fields(before)))
+              if expected == 0:
+                  raise RuntimeError(f'{name}: no {source_version} version fields found')
+              pattern = rb'("(?i:version)"\s*:\s*")' + re.escape(source_version.encode()) + rb'(")'
               changed, count = re.subn(pattern, lambda m: m[1] + target_version.encode() + m[2], data)
-              if count != 1 or json.loads(changed).get('version') != target_version:
-                  raise RuntimeError(f'{name}: expected exactly one root version change, found {count}')
+              if count != expected:
+                  raise RuntimeError(f'{name}: expected {expected} version changes, found {count}')
+              after = json.loads(changed)
+              if changed.replace(target_version.encode(), source_version.encode()) != data:
+                  raise RuntimeError(f'{name}: unexpected non-version modification')
               return changed
 
           with ZipFile(original) as old:
