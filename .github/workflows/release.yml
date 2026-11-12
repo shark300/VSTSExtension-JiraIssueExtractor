@@ -1,190 +1,276 @@
-name: Release VSIX (version-only)
+name: Build and release Azure DevOps VSIX
 
 on:
-  workflow_dispatch:
-    inputs:
-      source_tag:
-        description: Existing GitHub release to use as the byte-for-byte payload baseline
-        required: true
-        default: '1.2.1'
-        type: string
-      target_tag:
-        description: New extension version / GitHub release tag
-        required: true
-        default: '1.2.2'
-        type: string
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
-    paths:
-      - .github/workflows/release.yml
+  workflow_dispatch:
 
 permissions:
-  contents: write
-
-concurrency:
-  group: vsix-release
-  cancel-in-progress: false
+  contents: read
 
 jobs:
-  release:
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-22.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      base_version: ${{ steps.version.outputs.base_version }}
+      has_version_bump: ${{ steps.version.outputs.has_version_bump }}
     env:
-      SOURCE_TAG: ${{ inputs.source_tag || '1.2.1' }}
-      TARGET_TAG: ${{ inputs.target_tag || '1.2.2' }}
-      PREFIX: AttilaHajdu.jira-issue-extractor
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
-
+      VSIX_PREFIX: AttilaHajdu.jira-issue-extractor
     steps:
-      - name: Validate versions and check for an existing release
-        shell: bash
-        run: |
-          set -euo pipefail
-          [[ "$SOURCE_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
-          [[ "$TARGET_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
-          [[ "$SOURCE_TAG" != "$TARGET_TAG" ]]
-          if gh release view "$TARGET_TAG" >/dev/null 2>&1; then
-            echo "::error::Release $TARGET_TAG already exists; refusing to overwrite it."
-            exit 1
-          fi
+      - name: Checkout source with full commit history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
-      - name: Download the original published VSIX
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p release
-          gh release download "$SOURCE_TAG" \
-            --pattern "$PREFIX-$SOURCE_TAG.vsix" \
-            --dir release
-          test -s "release/$PREFIX-$SOURCE_TAG.vsix"
-
-      - name: Change only the packaged extension version and verify every file
+      - name: Calculate SemVer from conventional commits
+        id: version
         shell: bash
         run: |
           python3 - <<'PY'
-          import hashlib
-          import json
           import os
           import re
-          import xml.etree.ElementTree as ET
-          from pathlib import Path
-          from zipfile import ZipFile
+          import subprocess
 
-          source_version = os.environ['SOURCE_TAG']
-          target_version = os.environ['TARGET_TAG']
-          prefix = os.environ['PREFIX']
-          original = Path('release') / f'{prefix}-{source_version}.vsix'
-          published = Path('release') / f'{prefix}-{target_version}.vsix'
-          new_contents = {}
+          def git(*args):
+              return subprocess.check_output(['git', *args], text=True).strip()
 
-          def change_json_version(name, data):
-              def version_fields(value):
-                  if isinstance(value, dict):
-                      for key, item in value.items():
-                          if key.lower() == 'version' and isinstance(item, str) and item == source_version:
-                              yield item
-                          yield from version_fields(item)
-                  elif isinstance(value, list):
-                      for item in value:
-                          yield from version_fields(item)
+          # Use the first-parent history, not tags from unrelated branches.
+          mainline = git('rev-list', '--first-parent', 'HEAD').splitlines()
+          tag_by_commit = {}
+          for tag in git('tag', '--list').splitlines():
+              if re.fullmatch(r'\d+\.\d+\.\d+', tag):
+                  sha = git('rev-list', '-n', '1', tag)
+                  tag_by_commit.setdefault(sha, []).append(tag)
+          base_tag = None
+          for sha in mainline:
+              if sha in tag_by_commit:
+                  base_tag = max(tag_by_commit[sha], key=lambda x: tuple(map(int, x.split('.'))))
+                  break
+          if not base_tag:
+              raise SystemExit('No version tag found in first-parent history')
 
-              before = json.loads(data)
-              expected = len(list(version_fields(before)))
-              if expected == 0:
-                  print(f'{name}: no extension version field to update; leaving unchanged')
-                  return data
-              pattern = rb'("(?i:version)"\s*:\s*")' + re.escape(source_version.encode()) + rb'(")'
-              changed, count = re.subn(pattern, lambda m: m[1] + target_version.encode() + m[2], data)
-              if count != expected:
-                  raise RuntimeError(f'{name}: expected {expected} version changes, found {count}')
-              after = json.loads(changed)
-              if changed.replace(target_version.encode(), source_version.encode()) != data:
-                  raise RuntimeError(f'{name}: unexpected non-version modification')
-              return changed
+          major, minor, patch = map(int, base_tag.split('.'))
+          messages = subprocess.check_output([
+              'git', 'log', '--no-merges', '-z', '--format=%B', f'{base_tag}..HEAD'
+          ]).decode('utf-8').split('\x00')
+          bump = 0
+          for message in messages:
+              message = message.strip()
+              if not message:
+                  continue
+              first_line = message.splitlines()[0]
+              match = re.match(r'^([a-z][a-z0-9-]*)(?:\([^)]+\))?(!)?:\s+\S', first_line, re.I)
+              if not match:
+                  continue
+              kind = match.group(1).lower()
+              if match.group(2) or re.search(r'(?mi)^BREAKING[ -]CHANGE:\s+\S', message):
+                  bump = max(bump, 3)
+              elif kind == 'feat':
+                  bump = max(bump, 2)
+              elif kind in {'fix', 'perf', 'revert'}:
+                  bump = max(bump, 1)
 
-          with ZipFile(original) as old:
-              if old.testzip() is not None:
-                  raise RuntimeError('Source VSIX has a damaged ZIP member')
-              infos = old.infolist()
-              names = [i.filename for i in infos]
-              if len(names) != len(set(names)):
-                  raise RuntimeError('Source VSIX contains duplicate file names')
-              required = {'extension.vsixmanifest', 'extension.vsomanifest'}
-              version_required = {'extension.vsixmanifest'}
-              if not required.issubset(names):
-                  raise RuntimeError(f'Missing required VSIX manifests: {required - set(names)}')
-              with ZipFile(published, 'w') as new:
-                  new.comment = old.comment
-                  for info in infos:
-                      data = old.read(info)
-                      if info.filename == 'extension.vsixmanifest':
-                          xml = ET.fromstring(data)
-                          identities = [e for e in xml.iter() if e.tag.rsplit('}', 1)[-1] == 'Identity']
-                          if len(identities) != 1 or identities[0].get('Version') != source_version:
-                              raise RuntimeError('Unexpected VSIX Identity version')
-                          pattern = rb'(\bVersion\s*=\s*["\'])' + re.escape(source_version.encode()) + rb'(["\'])'
-                          changed, count = re.subn(pattern, lambda m: m[1] + target_version.encode() + m[2], data)
-                          if count != 1:
-                              raise RuntimeError('Expected exactly one VSIX Identity version change')
-                          data = changed
-                      elif info.filename == 'extension.vsomanifest':
-                          data = change_json_version(info.filename, data)
-                      elif info.filename == 'vss-extension.json':
-                          data = change_json_version(info.filename, data)
-                      if data != old.read(info):
-                          new_contents[info.filename] = data
-                      new.writestr(info, data)
-
-          with ZipFile(original) as old, ZipFile(published) as new:
-              if new.testzip() is not None or old.namelist() != new.namelist():
-                  raise RuntimeError('Bad output VSIX or changed file list/order')
-              actual_changes = []
-              for name in old.namelist():
-                  before, after = old.read(name), new.read(name)
-                  if before != after:
-                      if name not in new_contents or after != new_contents[name]:
-                          raise RuntimeError(f'Unexpected modification: {name}')
-                      actual_changes.append(name)
-                  elif name in new_contents:
-                      raise RuntimeError(f'Missing expected version modification: {name}')
-              if not version_required.issubset(actual_changes):
-                  raise RuntimeError('The VSIX identity version must be updated')
-              unchanged = len(old.namelist()) - len(actual_changes)
-              print(f'Verified {unchanged} unchanged files (exact bytes)')
-              print(f'Version-only changes: {actual_changes}')
-              print(f'Original VSIX: {original.stat().st_size} bytes')
-              print(f'New VSIX: {published.stat().st_size} bytes')
-              print(f'New SHA256: {hashlib.sha256(published.read_bytes()).hexdigest()}')
-              with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as report:
-                  report.write(f'### VSIX comparison: {source_version} → {target_version}\n\n')
-                  report.write(f'- {unchanged} files **byte-for-byte identical** inside both VSIX archives\n')
-                  report.write(f'- Version-only metadata updates: {", ".join(actual_changes)}\n')
-                  report.write(f'- Original size: {original.stat().st_size} bytes; new size: {published.stat().st_size} bytes\n')
+          version = (
+              f'{major + 1}.0.0' if bump == 3 else
+              f'{major}.{minor + 1}.0' if bump == 2 else
+              f'{major}.{minor}.{patch + 1}' if bump == 1 else base_tag
+          )
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              print(f'base_version={base_tag}', file=output)
+              print(f'version={version}', file=output)
+              print(f'has_version_bump={str(bump > 0).lower()}', file=output)
+          print(f'Baseline: {base_tag}; bump: {bump}; build version: {version}')
           PY
 
-      - name: Publish to Visual Studio Marketplace when credentials exist
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: tasks/extractor/package-lock.json
+
+      - name: Install locked task dependencies
+        run: npm ci --no-audit --no-fund
+        working-directory: tasks/extractor
+
+      - name: Compile TypeScript from source
+        run: npm run build
+        working-directory: tasks/extractor
+
+      - name: Check the expected task entry point
+        run: test -s tasks/extractor/dist/index.js
+
+      - name: Prune development-only dependencies before packaging
+        run: npm prune --omit=dev --no-audit --no-fund
+        working-directory: tasks/extractor
+
+      - name: Install pinned Azure DevOps VSIX packager
+        run: npm install --global tfx-cli@0.24.2 --no-audit --no-fund
+
+      - name: Package from source without modifying the manifest
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          tfx extension create \
+            --manifest-globs vss-extension.json \
+            --override "{\"version\":\"$VERSION\"}" \
+            --output-path "dist/$VSIX_PREFIX-$VERSION.vsix" \
+            --no-prompt
+          test -s "dist/$VSIX_PREFIX-$VERSION.vsix"
+          test "$(git show HEAD:vss-extension.json | sha256sum | cut -d' ' -f1)" = \
+               "$(sha256sum vss-extension.json | cut -d' ' -f1)"
+
+      - name: Download the previous published VSIX for comparison only
+        shell: bash
+        env:
+          BASE_VERSION: ${{ steps.version.outputs.base_version }}
+        run: |
+          set -euo pipefail
+          mkdir -p baseline
+          gh release download "$BASE_VERSION" \
+            --pattern "$VSIX_PREFIX-$BASE_VERSION.vsix" \
+            --dir baseline
+          test -s "baseline/$VSIX_PREFIX-$BASE_VERSION.vsix"
+
+      - name: Verify source-built VSIX content against the baseline
+        shell: bash
+        env:
+          BASE_VERSION: ${{ steps.version.outputs.base_version }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import os
+          import re
+          import zipfile
+          from pathlib import Path
+
+          prefix, base, version = (os.environ[x] for x in ('VSIX_PREFIX', 'BASE_VERSION', 'VERSION'))
+          old_path = Path('baseline') / f'{prefix}-{base}.vsix'
+          new_path = Path('dist') / f'{prefix}-{version}.vsix'
+          report = Path('dist/vsix-comparison.md')
+
+          with zipfile.ZipFile(old_path) as before, zipfile.ZipFile(new_path) as after:
+              if before.testzip() or after.testzip():
+                  raise RuntimeError('Damaged ZIP member in VSIX')
+              old_names, new_names = set(before.namelist()), set(after.namelist())
+              missing, added = sorted(old_names - new_names), sorted(new_names - old_names)
+              changed = []
+
+              def identity_without_version(data, expected):
+                  pattern = rb'(<Identity\b[^>]*?\bVersion\s*=\s*["\'])' + re.escape(expected.encode()) + rb'(["\'])'
+                  out, count = re.subn(pattern, lambda m: m[1] + b'<VERSION>' + m[2], data, flags=re.I)
+                  if count != 1:
+                      raise ValueError(f'Expected exactly one Identity Version={expected}, found {count}')
+                  return out
+
+              for name in sorted(old_names & new_names):
+                  left, right = before.read(name), after.read(name)
+                  if left == right:
+                      continue
+                  if name == 'extension.vsixmanifest':
+                      try:
+                          if identity_without_version(left, base) == identity_without_version(right, version):
+                              continue
+                      except ValueError:
+                          pass
+                  changed.append(name)
+              if base != version and 'extension.vsixmanifest' in old_names & new_names:
+                  if before.read('extension.vsixmanifest') == after.read('extension.vsixmanifest'):
+                      changed.append('extension.vsixmanifest (version did not change)')
+
+          result = not (missing or added or changed)
+          body = [
+              f'# Source-built VSIX: {base} versus {version}',
+              '',
+              f'- Baseline bytes: {old_path.stat().st_size}',
+              f'- New bytes: {new_path.stat().st_size}',
+              f'- New SHA256: {hashlib.sha256(new_path.read_bytes()).hexdigest()}',
+              f'- Missing files: {len(missing)}',
+              f'- Extra files: {len(added)}',
+              f'- Unexpected changed files: {len(changed)}',
+              f'- Result: {"PASS" if result else "FAIL"}',
+          ]
+          for label, names in (('Missing', missing), ('Extra', added), ('Changed', changed)):
+              if names:
+                  body.extend(['', f'## {label} files', ''])
+                  body.extend('- ' + name for name in names[:100])
+                  if len(names) > 100:
+                      body.append(f'- … and {len(names)-100} more')
+          report.write_text('\n'.join(body) + '\n')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write('\n'.join(body) + '\n')
+          print('\n'.join(body))
+          if not result:
+              raise SystemExit('Source-built VSIX differs beyond the extension version')
+          PY
+
+      - name: Upload VSIX and comparison report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsix-source-build
+          path: |
+            dist/*.vsix
+            dist/vsix-comparison.md
+          if-no-files-found: error
+
+  publish:
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && needs.build.outputs.has_version_bump == 'true'
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      VERSION: ${{ needs.build.outputs.version }}
+      VSIX_PREFIX: AttilaHajdu.jira-issue-extractor
+    steps:
+      - name: Download verified VSIX
+        uses: actions/download-artifact@v4
+        with:
+          name: vsix-source-build
+          path: dist
+
+      - name: Refuse to overwrite an existing release
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            echo "::error::Release $VERSION already exists; refusing to overwrite."
+            exit 1
+          fi
+          test -s "dist/$VSIX_PREFIX-$VERSION.vsix"
+
+      - name: Publish to Visual Studio Marketplace if credentials exist
         shell: bash
         env:
           MARKETPLACE_PAT: ${{ secrets.MARKETPLACE_PAT }}
         run: |
           set -euo pipefail
-          if [[ -z "$MARKETPLACE_PAT" ]]; then
-            echo '::notice::Marketplace publish skipped: configure the MARKETPLACE_PAT repository secret with Marketplace (Publish) scope.'
-            echo '- Marketplace: skipped (MARKETPLACE_PAT secret not configured)' >> "$GITHUB_STEP_SUMMARY"
+          if [ -z "$MARKETPLACE_PAT" ]; then
+            echo "::notice::Marketplace upload skipped: MARKETPLACE_PAT secret missing."
             exit 0
           fi
-          npm install --global tfx-cli
+          npm install --global tfx-cli@0.24.2 --no-audit --no-fund
           tfx extension publish --publisher AttilaHajdu \
-            --vsix "release/$PREFIX-$TARGET_TAG.vsix" \
+            --vsix "dist/$VSIX_PREFIX-$VERSION.vsix" \
             --auth-type pat --token "$MARKETPLACE_PAT" --no-prompt
-          echo '- Marketplace: published successfully' >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Publish the VSIX as a GitHub Release
+      - name: Publish the verified VSIX as a GitHub Release
         shell: bash
         run: |
           set -euo pipefail
-          gh release create "$TARGET_TAG" "release/$PREFIX-$TARGET_TAG.vsix" \
-            --target "$GITHUB_SHA" \
-            --title "$TARGET_TAG" \
-            --notes "Version-only update from $SOURCE_TAG. All bundled files are identical to $SOURCE_TAG except extension version fields, where present; verified by the release workflow."
+          gh release create "$VERSION" "dist/$VSIX_PREFIX-$VERSION.vsix" \
+            --target "$GITHUB_SHA" --title "$VERSION" \
+            --notes "Built from source using npm ci, TypeScript and tfx-cli. Version computed from conventional commits. Compared VSIX contents against the previous release, allowing only extension version differences."
