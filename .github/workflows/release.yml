@@ -97,19 +97,23 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '16.15.1'
           cache: npm
           cache-dependency-path: tasks/extractor/package-lock.json
 
-      - name: Use npm 8 for the repository's npm lockfile v2
-        run: npm install --global npm@8.19.4
+      - name: Use June 2022 npm for the repository's lockfile v2
+        run: npm install --global npm@8.11.0
 
       - name: Install locked task dependencies
         run: npm ci --no-audit --no-fund
         working-directory: tasks/extractor
 
-      - name: Compile TypeScript from source
-        run: npm run build
+      - name: Compile TypeScript with the historical TypeScript toolchain
+        run: |
+          npm install --global typescript@4.7.4 --no-audit --no-fund
+          tsc --version
+          tsc
+          npx --no-install tsc-alias
         working-directory: tasks/extractor
 
       - name: Check the expected task entry point
@@ -160,7 +164,7 @@ jobs:
           PY
 
       - name: Install pinned Azure DevOps VSIX packager
-        run: npm install --global tfx-cli@0.24.2 --no-audit --no-fund
+        run: npm install --global tfx-cli@0.11.0 --no-audit --no-fund
 
       - name: Package from source without modifying the manifest
         shell: bash
@@ -307,7 +311,7 @@ jobs:
             echo "::notice::Marketplace upload skipped: MARKETPLACE_PAT secret missing."
             exit 0
           fi
-          npm install --global tfx-cli@0.24.2 --no-audit --no-fund
+          npm install --global tfx-cli@0.11.0 --no-audit --no-fund
           tfx extension publish --publisher AttilaHajdu \
             --vsix "dist/$VSIX_PREFIX-$VERSION.vsix" \
             --auth-type pat --token "$MARKETPLACE_PAT" --no-prompt
