@@ -5,8 +5,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-      - run: npm install npm@latest -g
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "16.15.1"
       - run: npm ci
         working-directory: ./tasks/extractor
       - run: npm run lint:check
@@ -15,8 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-      - run: npm install npm@latest -g
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "16.15.1"
       - run: npm ci
         working-directory: ./tasks/extractor
       - run: npm run test
@@ -25,8 +27,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-      - run: npm install npm@latest -g
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "16.15.1"
       - run: npm ci
         working-directory: ./tasks/extractor
       - run: npm run integrationTest
