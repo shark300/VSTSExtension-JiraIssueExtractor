@@ -38,7 +38,7 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install pinned git-cliff
+      - name: Install git-cliff
         run: npm install --global git-cliff@2.14.2 --no-audit --no-fund
 
       - name: Calculate SemVer with git-cliff
@@ -62,7 +62,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "git-cliff version: $VERSION; version bump: $HAS_VERSION_BUMP"
 
-      - name: Set up Node.js for the historical task build
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '16.15.1'
@@ -72,11 +72,11 @@ jobs:
       - name: npm install
         run: npm install --global npm@8.11.0
 
-      - name: Install locked task dependencies
+      - name: Install task dependencies
         run: npm ci --no-audit --no-fund
         working-directory: tasks/extractor
 
-      - name: Compile TypeScript with the historical TypeScript toolchain
+      - name: Compile TypeScript
         run: |
           npm install --global typescript@4.7.4 --no-audit --no-fund
           tsc --version
