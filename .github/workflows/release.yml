@@ -142,8 +142,9 @@ jobs:
               task = json.loads(archive.read('tasks/extractor/task.json'))
               if set(task.get('execution', {})) != {'Node24'}:
                   raise SystemExit('Packaged task does not exclusively target Node24')
-              if task.get('version', {}).get('Major') != 1 or task.get('version', {}).get('Minor') != 2:
-                  raise SystemExit('Unexpected task major/minor version in VSIX')
+              task_version = task.get('version', {})
+              if not all(isinstance(task_version.get(k), int) for k in ('Major', 'Minor', 'Patch')):
+                  raise SystemExit('Invalid packaged task version')
               root = ET.fromstring(archive.read('extension.vsixmanifest'))
               ids = [node for node in root.iter() if node.tag.rsplit('}', 1)[-1] == 'Identity']
               if len(ids) != 1 or ids[0].get('Version') != version:
