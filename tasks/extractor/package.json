@@ -36,7 +36,7 @@
     "husky": "^9.1.7",
     "nyc": "^18.0.0",
     "prettier": "^3.9.10",
-    "sinon": "^13.0.2",
+    "sinon": "^22.1.0",
     "sync-request": "^6.1.0",
     "ts-enum-util": "^4.0.2",
     "ts-mocha": "^10.1.0",
