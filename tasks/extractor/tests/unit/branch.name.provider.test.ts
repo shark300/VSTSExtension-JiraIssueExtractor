@@ -1,5 +1,4 @@
-import chai = require("chai");
-const expect = chai.expect;
+import { expect } from "chai";
 
 import { stubConstructor, stubInterface } from "ts-sinon";
 
