@@ -25,6 +25,9 @@ jobs:
       GH_REPO: ${{ github.repository }}
       VSIX_PREFIX: AttilaHajdu.jira-issue-extractor
     steps:
+      - name: Preserve source file line endings on Windows
+        run: git config --global core.autocrlf false
+
       - name: Checkout source with full commit history
         uses: actions/checkout@v4
         with:
@@ -181,6 +184,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           python3 - <<'PY'
+          import difflib
           import hashlib
           import os
           import re
@@ -217,6 +221,14 @@ jobs:
                       except ValueError:
                           pass
                   changed.append(name)
+                  if len(changed) <= 12 and len(left) < 100000 and len(right) < 100000:
+                      print(f'\nDiff: {name}')
+                      lines = list(difflib.unified_diff(
+                          left.decode('utf-8', errors='replace').splitlines(),
+                          right.decode('utf-8', errors='replace').splitlines(),
+                          fromfile=f'old/{name}', tofile=f'new/{name}', lineterm=''
+                      ))
+                      print('\n'.join(lines[:65]))
               if base != version and 'extension.vsixmanifest' in old_names & new_names:
                   if before.read('extension.vsixmanifest') == after.read('extension.vsixmanifest'):
                       changed.append('extension.vsixmanifest (version did not change)')
