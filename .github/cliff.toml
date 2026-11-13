@@ -13,10 +13,7 @@ commit_parsers = [
   { message = '^fix', group = 'Bug fixes' },
   { message = '^perf', group = 'Performance' },
   { message = '^revert', group = 'Reverts' },
-  # Existing Dependabot PRs were created before conventional prefixes were configured.
-  # Only their npm production-dependency bumps should count as patch changes.
-  { message = '^chore\(deps\): bump (winston|azure-devops-node-api)\b', group = 'Dependencies' },
-  # Skip dev tooling, workflow actions, and all other maintenance-only changes.
+  # Skip maintenance-only commits (including dev tools and GitHub Actions).
   { message = '.*', skip = true },
 ]
 
