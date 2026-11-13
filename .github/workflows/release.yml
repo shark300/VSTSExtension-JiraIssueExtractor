@@ -33,66 +33,36 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Calculate SemVer from conventional commits
+      - name: Set up Node.js for git-cliff
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pinned git-cliff
+        run: npm install --global git-cliff@2.14.2 --no-audit --no-fund
+
+      - name: Calculate SemVer with git-cliff
         id: version
         shell: bash
         run: |
-          python3 - <<'PY'
-          import os
-          import re
-          import subprocess
+          set -euo pipefail
+          VERSION="$(git-cliff --config .github/cliff.toml --use-branch-tags --bumped-version)"
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+            echo "::error::git-cliff returned an invalid release version: $VERSION"
+            exit 1
+          }
+          if git rev-parse --verify -q "refs/tags/$VERSION" >/dev/null; then
+            HAS_VERSION_BUMP=false
+          else
+            HAS_VERSION_BUMP=true
+          fi
+          {
+            echo "version=$VERSION"
+            echo "has_version_bump=$HAS_VERSION_BUMP"
+          } >> "$GITHUB_OUTPUT"
+          echo "git-cliff version: $VERSION; version bump: $HAS_VERSION_BUMP"
 
-          def git(*args):
-              return subprocess.check_output(['git', *args], text=True).strip()
-
-          # Use the first-parent history, not tags from unrelated branches.
-          mainline = git('rev-list', '--first-parent', 'HEAD').splitlines()
-          tag_by_commit = {}
-          for tag in git('tag', '--list').splitlines():
-              if re.fullmatch(r'\d+\.\d+\.\d+', tag):
-                  sha = git('rev-list', '-n', '1', tag)
-                  tag_by_commit.setdefault(sha, []).append(tag)
-          base_tag = None
-          for sha in mainline:
-              if sha in tag_by_commit:
-                  base_tag = max(tag_by_commit[sha], key=lambda x: tuple(map(int, x.split('.'))))
-                  break
-          if not base_tag:
-              raise SystemExit('No version tag found in first-parent history')
-
-          major, minor, patch = map(int, base_tag.split('.'))
-          messages = subprocess.check_output([
-              'git', 'log', '--no-merges', '-z', '--format=%B', f'{base_tag}..HEAD'
-          ]).decode('utf-8').split('\x00')
-          bump = 0
-          for message in messages:
-              message = message.strip()
-              if not message:
-                  continue
-              first_line = message.splitlines()[0]
-              match = re.match(r'^([a-z][a-z0-9-]*)(?:\([^)]+\))?(!)?:\s+\S', first_line, re.I)
-              if not match:
-                  continue
-              kind = match.group(1).lower()
-              if match.group(2) or re.search(r'(?mi)^BREAKING[ -]CHANGE:\s+\S', message):
-                  bump = max(bump, 3)
-              elif kind == 'feat':
-                  bump = max(bump, 2)
-              elif kind in {'fix', 'perf', 'revert'}:
-                  bump = max(bump, 1)
-
-          version = (
-              f'{major + 1}.0.0' if bump == 3 else
-              f'{major}.{minor + 1}.0' if bump == 2 else
-              f'{major}.{minor}.{patch + 1}' if bump == 1 else base_tag
-          )
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
-              print(f'version={version}', file=output)
-              print(f'has_version_bump={str(bump > 0).lower()}', file=output)
-          print(f'Last version tag: {base_tag}; bump: {bump}; build version: {version}')
-          PY
-
-      - name: Set up Node.js
+      - name: Set up Node.js for the historical task build
         uses: actions/setup-node@v4
         with:
           node-version: '16.15.1'
