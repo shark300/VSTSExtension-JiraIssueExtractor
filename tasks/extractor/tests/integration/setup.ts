@@ -58,7 +58,7 @@ tmr.registerMock("typed-rest-client/RestClient", {
               count: 3,
             },
             statusCode: 200,
-            headers: [],
+            headers: {},
           };
         } else if (
           requestUrl === "https://my-azure-server/myorganization/_apis/build"
@@ -91,7 +91,7 @@ tmr.registerMock("typed-rest-client/RestClient", {
               ],
             },
             statusCode: 200,
-            headers: [],
+            headers: {},
           };
         } else if (
           requestUrl === "https://my-azure-server/myorganization/_apis/git"
@@ -125,7 +125,7 @@ tmr.registerMock("typed-rest-client/RestClient", {
               ],
             },
             statusCode: 200,
-            headers: [],
+            headers: {},
           };
         } else throw Error(`Unexpected REST options: ${requestUrl}`);
       },
@@ -147,7 +147,7 @@ tmr.registerMock("typed-rest-client/RestClient", {
               },
             },
             statusCode: 200,
-            headers: [],
+            headers: {},
           };
         } else if (
           resource ===
@@ -159,7 +159,7 @@ tmr.registerMock("typed-rest-client/RestClient", {
               value: [],
             },
             statusCode: 200,
-            headers: [],
+            headers: {},
           };
         } else if (
           resource ===
@@ -176,7 +176,7 @@ tmr.registerMock("typed-rest-client/RestClient", {
               },
             },
             statusCode: 200,
-            headers: [],
+            headers: {},
           };
         } else if (
           resource ===
@@ -193,7 +193,7 @@ tmr.registerMock("typed-rest-client/RestClient", {
               },
             },
             statusCode: 200,
-            headers: [],
+            headers: {},
           };
         } else if (
           resource ===
@@ -209,7 +209,7 @@ tmr.registerMock("typed-rest-client/RestClient", {
               ],
             },
             statusCode: 200,
-            headers: [],
+            headers: {},
           };
         } else if (
           resource ===
@@ -225,7 +225,7 @@ tmr.registerMock("typed-rest-client/RestClient", {
               ],
             },
             statusCode: 200,
-            headers: [],
+            headers: {},
           };
         } else if (
           resource ===
@@ -236,7 +236,7 @@ tmr.registerMock("typed-rest-client/RestClient", {
               comment: "multi line commit\nJIE-1257: sample commit message",
             },
             statusCode: 200,
-            headers: [],
+            headers: {},
           };
         } else if (
           resource ===
@@ -247,7 +247,7 @@ tmr.registerMock("typed-rest-client/RestClient", {
               comment: "JIE-1349: sample commit message",
             },
             statusCode: 200,
-            headers: [],
+            headers: {},
           };
         } else if (
           resource ===
@@ -274,7 +274,7 @@ tmr.registerMock("typed-rest-client/RestClient", {
               count: 2,
             },
             statusCode: 200,
-            headers: [],
+            headers: {},
           };
         } else throw Error(`Unexpected REST GET: ${resource}`);
       },
