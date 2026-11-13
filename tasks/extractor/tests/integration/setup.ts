@@ -276,7 +276,7 @@ tmr.registerMock("typed-rest-client/RestClient", {
             statusCode: 200,
             headers: [],
           };
-        } else throw Error(`Unexpected REST options: ${requestUrl}`);
+        } else throw Error(`Unexpected REST GET: ${resource}`);
       },
     };
   },
