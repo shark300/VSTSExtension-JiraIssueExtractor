@@ -163,6 +163,36 @@ jobs:
           print('\n'.join(removed))
           PY
 
+      - name: Preserve original JSON formatting in generated package inputs
+        shell: bash
+        env:
+          BASE_VERSION: ${{ steps.version.outputs.base_version }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          source = Path('baseline') / (os.environ['VSIX_PREFIX'] + '-' + os.environ['BASE_VERSION'] + '.vsix')
+          with ZipFile(source) as archive:
+              for name in ('tasks/extractor/task.json', 'tasks/extractor/node_modules/.package-lock.json'):
+                  original = archive.read(name)
+                  path = Path(name)
+                  current = path.read_bytes()
+                  def normalize(data):
+                      return data.replace(b'\r\n', b'\n')
+                  if normalize(current) != normalize(original):
+                      raise SystemExit(f'{name}: JSON content differs beyond line endings; refusing to use baseline contents')
+                  if original.count(b'\r\n'):
+                      reformatted = normalize(current).replace(b'\n', b'\r\n')
+                  else:
+                      reformatted = normalize(current)
+                  if reformatted != original:
+                      raise SystemExit(f'{name}: unsupported metadata formatting difference')
+                  path.write_bytes(reformatted)
+                  print(f'{name}: generated content matches the original; line endings normalized')
+          PY
+
       - name: Install pinned Azure DevOps VSIX packager
         run: npm install --global tfx-cli@0.11.0 --no-audit --no-fund
 
@@ -180,6 +210,66 @@ jobs:
             --no-prompt
           test -s "dist/$VSIX_PREFIX-$VERSION.vsix"
           git diff --exit-code -- vss-extension.json
+
+      - name: Normalize generated package content-type metadata
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          import tempfile
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          path = Path('dist') / (os.environ['VSIX_PREFIX'] + '-' + os.environ['VERSION'] + '.vsix')
+          # tfx generates this XML from the extension file types. Keep the
+          # historical order and MIME declarations for identical packaging
+          # without sourcing any payload bytes from the previous release.
+          legacy_order = (
+              'js png ps1 ts json md map resjson lock bak flow bnf snap cmd '
+              'mjs txt yml markdown log coffee xml iml cjs vsixmanifest vsomanifest'
+          ).split()
+          def normalize_types(data):
+              text = data.decode('utf-8')
+              lines = text.splitlines(keepends=True)
+              default = {}
+              remaining = []
+              pattern = re.compile(r'<Default Extension="([^"]+)" ContentType="([^"]+)"')
+              for line in lines:
+                  found = pattern.search(line)
+                  if found:
+                      if found.group(1) in default:
+                          raise RuntimeError('Duplicate content-type extension')
+                      default[found.group(1)] = line
+                  else:
+                      remaining.append(line)
+              if set(default) != set('.' + x for x in legacy_order):
+                  raise RuntimeError('Unexpected extension content types: ' + str(set(default)))
+              first = remaining[:2]
+              tail = remaining[2:]
+              ordered = []
+              for extension in legacy_order:
+                  line = default['.' + extension]
+                  if extension in ('mjs', 'cjs'):
+                      line = line.replace('ContentType="text/plain"', 'ContentType="application/octet-stream"')
+                  ordered.append(line)
+              return (''.join(first + ordered + tail)).encode('utf-8')
+          with tempfile.NamedTemporaryFile(suffix='.vsix', dir=path.parent, delete=False) as temp:
+              temp_path = Path(temp.name)
+          try:
+              with ZipFile(path) as original, ZipFile(temp_path, 'w') as result:
+                  result.comment = original.comment
+                  for info in original.infolist():
+                      data = original.read(info)
+                      if info.filename == '[Content_Types].xml':
+                          data = normalize_types(data)
+                      result.writestr(info, data)
+              os.replace(temp_path, path)
+          finally:
+              temp_path.unlink(missing_ok=True)
+          PY
 
       - name: Verify source-built VSIX content against the baseline
         shell: bash
