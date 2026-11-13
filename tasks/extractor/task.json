@@ -9,14 +9,15 @@
   "author": "attila.hajdu",
   "version": {
     "Major": 1,
-    "Minor": 1,
+    "Minor": 2,
     "Patch": 0
   },
   "instanceNameFormat": "Extract Jira keys",
   "inputs": [],
   "execution": {
-    "Node10": {
+    "Node24": {
       "target": "dist/index.js"
     }
-  }
+  },
+  "minimumAgentVersion": "4.265.1"
 }

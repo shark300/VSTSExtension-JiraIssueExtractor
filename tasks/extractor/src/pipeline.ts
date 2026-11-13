@@ -21,7 +21,7 @@ export class Pipeline {
 
   async getApi(serverUrl: string): Promise<vm.WebApi> {
     const token = this.getEnv("SYSTEM_ACCESSTOKEN");
-    const authHandler = vm.getPersonalAccessTokenHandler(token);
+    const authHandler = vm.getBearerHandler(token);
     const option = undefined;
 
     const vsts: vm.WebApi = new vm.WebApi(serverUrl, authHandler, option);

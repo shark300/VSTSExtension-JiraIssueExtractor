@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   build:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: windows-2022
     defaults:
       run:
@@ -22,7 +23,8 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
-      VSIX_PREFIX: AttilaHajdu.jira-issue-extractor
+      VSIX_PREFIX: ${{ github.event_name == 'pull_request' && 'AttilaHajdu.jira-issue-extractor-dev' || 'AttilaHajdu.jira-issue-extractor' }}
+      MANIFEST_FILE: ${{ github.event_name == 'pull_request' && 'vss-extension.dev.json' || 'vss-extension.json' }}
     steps:
       - name: Preserve source file line endings on Windows
         run: git config --global core.autocrlf false
@@ -36,7 +38,7 @@ jobs:
       - name: Set up Node.js for git-cliff
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '24'
 
       - name: Install git-cliff
         run: npm install --global git-cliff@2.14.2 --no-audit --no-fund
@@ -46,31 +48,38 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          VERSION="$(git-cliff --config .github/cliff.toml --use-branch-tags --bumped-version)"
-          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
-            echo "::error::git-cliff returned an invalid release version: $VERSION"
+          BASE_VERSION="$(git-cliff --config .github/cliff.toml --use-branch-tags --bumped-version)"
+          [[ "$BASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+            echo "::error::git-cliff returned an invalid base version: $BASE_VERSION"
             exit 1
           }
-          if git rev-parse --verify -q "refs/tags/$VERSION" >/dev/null; then
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            # VSIX Identity.Version requires numeric components; keep SemVer prerelease in the filename.
+            VERSION="$BASE_VERSION.$GITHUB_RUN_NUMBER"
+            ARTIFACT_VERSION="$BASE_VERSION-$GITHUB_RUN_NUMBER"
             HAS_VERSION_BUMP=false
           else
-            HAS_VERSION_BUMP=true
+            VERSION="$BASE_VERSION"
+            ARTIFACT_VERSION="$BASE_VERSION"
+            if git rev-parse --verify -q "refs/tags/$VERSION" >/dev/null; then
+              HAS_VERSION_BUMP=false
+            else
+              HAS_VERSION_BUMP=true
+            fi
           fi
           {
             echo "version=$VERSION"
+            echo "artifact_version=$ARTIFACT_VERSION"
             echo "has_version_bump=$HAS_VERSION_BUMP"
           } >> "$GITHUB_OUTPUT"
-          echo "git-cliff version: $VERSION; version bump: $HAS_VERSION_BUMP"
+          echo "Base version: $BASE_VERSION; VSIX version: $VERSION; artifact version: $ARTIFACT_VERSION; version bump: $HAS_VERSION_BUMP"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "16.15.1"
+          node-version: '24'
           cache: npm
           cache-dependency-path: tasks/extractor/package-lock.json
-
-      - name: npm install
-        run: npm install --global npm@8.11.0
 
       - name: Install task dependencies
         run: npm ci --no-audit --no-fund
@@ -78,10 +87,7 @@ jobs:
 
       - name: Compile TypeScript
         run: |
-          npm install --global typescript@4.7.4 --no-audit --no-fund
-          tsc --version
-          tsc
-          npx --no-install tsc-alias
+          npm run build
         working-directory: tasks/extractor
 
       - name: Check the expected task entry point
@@ -106,25 +112,51 @@ jobs:
       - name: Install Azure DevOps VSIX packager
         run: npm install --global tfx-cli@0.11.0 --no-audit --no-fund
 
+      - name: Prepare isolated private dev extension for PR
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path('vss-extension.json').read_text(encoding='utf-8'))
+          manifest['id'] = 'jira-issue-extractor-dev'
+          manifest['name'] = 'Jira Issue Extractor Dev'
+          manifest['public'] = False
+          for contribution in manifest['contributions']:
+              contribution['id'] += '-dev'
+          Path('vss-extension.dev.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+
+          task_path = Path('tasks/extractor/task.json')
+          task = json.loads(task_path.read_text(encoding='utf-8'))
+          task['id'] = 'e74abf75-8b4f-4d1f-bc17-47f109d2ad42'
+          task['name'] = 'JiraIssueKeyExtractorDev'
+          task['friendlyName'] = 'Jira Issue Key Extractor Dev'
+          task_path.write_text(json.dumps(task, indent=2) + '\n', encoding='utf-8')
+          PY
+
       - name: Build package
         shell: bash
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          ARTIFACT_VERSION: ${{ steps.version.outputs.artifact_version }}
         run: |
           set -euo pipefail
           mkdir -p dist
           tfx extension create \
-            --manifest-globs vss-extension.json \
+            --manifest-globs "$MANIFEST_FILE" \
             --override "{\"version\":\"$VERSION\"}" \
-            --output-path "dist/$VSIX_PREFIX-$VERSION.vsix" \
+            --output-path "dist/$VSIX_PREFIX-$ARTIFACT_VERSION.vsix" \
             --no-prompt
-          test -s "dist/$VSIX_PREFIX-$VERSION.vsix"
+          test -s "dist/$VSIX_PREFIX-$ARTIFACT_VERSION.vsix"
           git diff --exit-code -- vss-extension.json
 
       - name: Verify generated VSIX structure and version
         shell: bash
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          ARTIFACT_VERSION: ${{ steps.version.outputs.artifact_version }}
         run: |
           python3 - <<'PY'
           import os
@@ -133,7 +165,7 @@ jobs:
           from zipfile import ZipFile
 
           version = os.environ['VERSION']
-          path = Path('dist') / f"{os.environ['VSIX_PREFIX']}-{version}.vsix"
+          path = Path('dist') / f"{os.environ['VSIX_PREFIX']}-{os.environ['ARTIFACT_VERSION']}.vsix"
           if not path.is_file() or path.stat().st_size == 0:
               raise SystemExit('VSIX was not created')
           with ZipFile(path) as archive:
@@ -144,17 +176,31 @@ jobs:
               required = {'extension.vsixmanifest', 'tasks/extractor/task.json', 'tasks/extractor/dist/index.js'}
               if missing := required - names:
                   raise SystemExit(f'Missing required VSIX entries: {sorted(missing)}')
+              import json
+              task = json.loads(archive.read('tasks/extractor/task.json'))
+              if set(task.get('execution', {})) != {'Node24'}:
+                  raise SystemExit('Packaged task does not exclusively target Node24')
+              is_dev = os.environ['GITHUB_EVENT_NAME'] == 'pull_request'
+              expected_task_name = 'JiraIssueKeyExtractorDev' if is_dev else 'JiraIssueKeyExtractor'
+              if task.get('name') != expected_task_name:
+                  raise SystemExit(f'Unexpected packaged task name: {task.get("name")}')
+              task_version = task.get('version', {})
+              if not all(isinstance(task_version.get(k), int) for k in ('Major', 'Minor', 'Patch')):
+                  raise SystemExit('Invalid packaged task version')
               root = ET.fromstring(archive.read('extension.vsixmanifest'))
               ids = [node for node in root.iter() if node.tag.rsplit('}', 1)[-1] == 'Identity']
               if len(ids) != 1 or ids[0].get('Version') != version:
                   raise SystemExit('Packaged extension version does not match calculated version')
+              expected_extension_id = 'jira-issue-extractor-dev' if is_dev else 'jira-issue-extractor'
+              if ids[0].get('Id') != expected_extension_id:
+                  raise SystemExit(f'Unexpected extension ID: {ids[0].get("Id")}')
           print(f'Validated {path.name}: {path.stat().st_size} bytes, {len(names)} entries, version {version}')
           PY
 
       - name: Upload built VSIX
         uses: actions/upload-artifact@v4
         with:
-          name: vsix-source-build
+          name: ${{ github.event_name == 'pull_request' && 'vsix-dev' || 'vsix-source-build' }}
           path: dist/*.vsix
           if-no-files-found: error
 

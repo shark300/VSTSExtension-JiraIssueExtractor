@@ -2,9 +2,6 @@ import * as winston from "winston";
 
 import { IExtractApi } from "@/ExtractApi";
 
-require("core-js/modules/es.array.flat");
-require("core-js/modules/es.promise.all-settled");
-
 export class ExtractorService {
   constructor(
     public extractors: IExtractApi[],
