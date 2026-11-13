@@ -44,7 +44,7 @@
     "tsc-alias": "^1.6.7",
     "tsconfig-paths": "^3.14.1",
     "@types/node": "^24.0.0",
-    "typescript": "^5.9.3"
+    "typescript": "^7.0.2"
   },
   "engines": {
     "node": ">=24"
