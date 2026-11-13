@@ -30,7 +30,7 @@ jobs:
         run: git config --global core.autocrlf false
 
       - name: Checkout source with full commit history
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
