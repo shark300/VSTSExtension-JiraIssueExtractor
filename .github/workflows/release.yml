@@ -205,8 +205,9 @@ jobs:
           if-no-files-found: error
 
   publish:
+    # Build on every main push, but publish only when explicitly requested.
     if: >-
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      github.event_name == 'workflow_dispatch' &&
       github.ref == 'refs/heads/main' &&
       needs.build.outputs.has_version_bump == 'true'
     needs: build
