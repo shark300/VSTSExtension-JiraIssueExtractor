@@ -36,7 +36,7 @@ jobs:
       - name: Set up Node.js for git-cliff
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '24'
 
       - name: Install git-cliff
         run: npm install --global git-cliff@2.14.2 --no-audit --no-fund
@@ -65,12 +65,9 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "16.15.1"
+          node-version: '24'
           cache: npm
           cache-dependency-path: tasks/extractor/package-lock.json
-
-      - name: npm install
-        run: npm install --global npm@8.11.0
 
       - name: Install task dependencies
         run: npm ci --no-audit --no-fund
@@ -78,10 +75,7 @@ jobs:
 
       - name: Compile TypeScript
         run: |
-          npm install --global typescript@4.7.4 --no-audit --no-fund
-          tsc --version
-          tsc
-          npx --no-install tsc-alias
+          npm run build
         working-directory: tasks/extractor
 
       - name: Check the expected task entry point
@@ -144,6 +138,12 @@ jobs:
               required = {'extension.vsixmanifest', 'tasks/extractor/task.json', 'tasks/extractor/dist/index.js'}
               if missing := required - names:
                   raise SystemExit(f'Missing required VSIX entries: {sorted(missing)}')
+              import json
+              task = json.loads(archive.read('tasks/extractor/task.json'))
+              if set(task.get('execution', {})) != {'Node24'}:
+                  raise SystemExit('Packaged task does not exclusively target Node24')
+              if task.get('version', {}).get('Major') != 1 or task.get('version', {}).get('Minor') != 2:
+                  raise SystemExit('Unexpected task major/minor version in VSIX')
               root = ET.fromstring(archive.read('extension.vsixmanifest'))
               ids = [node for node in root.iter() if node.tag.rsplit('}', 1)[-1] == 'Identity']
               if len(ids) != 1 or ids[0].get('Version') != version:

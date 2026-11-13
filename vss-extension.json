@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "jira-issue-extractor",
   "name": "Jira Issue Extractor",
-  "version": "1.2.1",
+  "version": "2.0.0",
   "publisher": "AttilaHajdu",
   "targets": [
     {
@@ -11,7 +11,9 @@
   ],
   "description": "Tools for handling Jira keys from Git.",
   "public": true,
-  "categories": ["Azure Pipelines"],
+  "categories": [
+    "Azure Pipelines"
+  ],
   "icons": {
     "default": "images/extension-icon.png"
   },
@@ -24,7 +26,9 @@
     {
       "id": "bb202716-b787-11ec-b909-0242ac120002",
       "type": "ms.vss-distributed-task.task",
-      "targets": ["ms.vss-distributed-task.tasks"],
+      "targets": [
+        "ms.vss-distributed-task.tasks"
+      ],
       "properties": {
         "name": "tasks/extractor"
       }

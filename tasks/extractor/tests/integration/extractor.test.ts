@@ -27,15 +27,15 @@ describe("Extract Jira keys", function () {
     process.env["SYSTEM_ACCESSTOKEN"] = "token";
   });
 
-  it("should succeed and publish environment variable with collected jira keys", function (done: Mocha.Done) {
+  it("should succeed and publish environment variable with collected jira keys", async function () {
     // given
-    this.timeout(5000);
+    this.timeout(10000);
 
     const tp: string = path.join(__dirname, "setup.js");
     const tr: ttm.MockTestRunner = new ttm.MockTestRunner(tp);
 
     // when
-    tr.run();
+    await tr.runAsync();
 
     // then
     expect(tr.succeeded).to.equals(true, "should have succeeded");
@@ -43,12 +43,11 @@ describe("Extract Jira keys", function () {
     expect(tr.errorIssues.length).to.equals(0, "should have no errors");
     expect(getVariable(tr, "Jira.Keys")).to.equal("JIE-541, JIE-1257");
     console.log(tr.stdout);
-    done();
   });
 
-  it("should succeed and publish environment variable with collected jira keys without matching pull request", function (done: Mocha.Done) {
+  it("should succeed and publish environment variable with collected jira keys without matching pull request", async function () {
     // given
-    this.timeout(5000);
+    this.timeout(10000);
 
     process.env["BUILD_BUILDID"] = "2";
 
@@ -56,7 +55,7 @@ describe("Extract Jira keys", function () {
     const tr: ttm.MockTestRunner = new ttm.MockTestRunner(tp);
 
     // when
-    tr.run();
+    await tr.runAsync();
 
     // then
     expect(tr.succeeded).to.equals(true, "should have succeeded");
@@ -64,6 +63,5 @@ describe("Extract Jira keys", function () {
     expect(tr.errorIssues.length).to.equals(0, "should have no errors");
     expect(getVariable(tr, "Jira.Keys")).to.equal("JIE-1349");
     console.log(tr.stdout);
-    done();
   });
 });

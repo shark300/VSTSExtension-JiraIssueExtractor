@@ -3,9 +3,6 @@ import * as winston from "winston";
 import { CommitMessageProvider } from "@/commit.message.provider";
 import { IExtractApi } from "@/ExtractApi";
 
-require("core-js/modules/es.array.flat-map");
-require("core-js/modules/es.string.match-all");
-
 export class CommitExtractor implements IExtractApi {
   constructor(
     public commitMessageProvider: CommitMessageProvider,
