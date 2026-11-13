@@ -99,7 +99,7 @@ jobs:
           cache: npm
           cache-dependency-path: tasks/extractor/package-lock.json
 
-      - name: Use June 2022 npm for the repository's lockfile v2
+      - name: npm install
         run: npm install --global npm@8.11.0
 
       - name: Install locked task dependencies
