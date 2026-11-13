@@ -220,7 +220,7 @@ jobs:
       VSIX_PREFIX: AttilaHajdu.jira-issue-extractor
     steps:
       - name: Download source-built VSIX
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: vsix-source-build
           path: dist
