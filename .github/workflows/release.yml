@@ -133,7 +133,7 @@ jobs:
           rm -f tasks/extractor/package.json tasks/extractor/package-lock.json
           rm -f tasks/extractor/tsconfig.json
 
-      - name: Install pinned Azure DevOps VSIX packager
+      - name: Install Azure DevOps VSIX packager
         run: npm install --global tfx-cli@0.11.0 --no-audit --no-fund
 
       - name: Package from source without modifying the manifest
