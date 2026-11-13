@@ -12,8 +12,8 @@
     "winston": "^3.7.2"
   },
   "scripts": {
-    "integrationTest": "npm run build && tsc tests/integration/setup.ts && NODE_OPTIONS=--no-experimental-strip-types ts-mocha --paths tests/integration/*.test.ts",
-    "test": "NODE_OPTIONS=--no-experimental-strip-types ts-mocha --paths tests/unit/*.test.ts",
+    "integrationTest": "npm run build && tsc tests/integration/setup.ts && ts-mocha --paths tests/integration/*.test.ts",
+    "test": "ts-mocha --paths tests/unit/*.test.ts",
     "test:watch": "ts-mocha --paths tests/unit/*.test.ts -w --watch-files **/*.ts",
     "lint:check": "eslint ../.. && prettier --check ../.. --ignore-path ../../.prettierignore",
     "lint:fix": "eslint ../.. --fix && prettier --write ../.. --ignore-path ../../.prettierignore",
