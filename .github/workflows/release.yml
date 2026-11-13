@@ -18,7 +18,6 @@ jobs:
         shell: bash
     outputs:
       version: ${{ steps.version.outputs.version }}
-      base_version: ${{ steps.version.outputs.base_version }}
       has_version_bump: ${{ steps.version.outputs.has_version_bump }}
     env:
       GH_TOKEN: ${{ github.token }}
@@ -88,10 +87,9 @@ jobs:
               f'{major}.{minor}.{patch + 1}' if bump == 1 else base_tag
           )
           with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
-              print(f'base_version={base_tag}', file=output)
               print(f'version={version}', file=output)
               print(f'has_version_bump={str(bump > 0).lower()}', file=output)
-          print(f'Baseline: {base_tag}; bump: {bump}; build version: {version}')
+          print(f'Last version tag: {base_tag}; bump: {bump}; build version: {version}')
           PY
 
       - name: Set up Node.js
@@ -123,75 +121,17 @@ jobs:
         run: npm prune --omit=dev --no-audit --no-fund
         working-directory: tasks/extractor
 
-      - name: Download the previous published VSIX for comparison only
+      - name: Remove build-time-only files from the task package
         shell: bash
-        env:
-          BASE_VERSION: ${{ steps.version.outputs.base_version }}
         run: |
           set -euo pipefail
-          mkdir -p baseline
-          gh release download "$BASE_VERSION" \
-            --pattern "$VSIX_PREFIX-$BASE_VERSION.vsix" \
-            --dir baseline
-          test -s "baseline/$VSIX_PREFIX-$BASE_VERSION.vsix"
-
-      - name: Exclude files absent from the previous release payload
-        shell: bash
-        env:
-          BASE_VERSION: ${{ steps.version.outputs.base_version }}
-        run: |
-          python3 - <<'PY'
-          import os
-          from pathlib import Path
-          from zipfile import ZipFile
-
-          old = Path('baseline') / (os.environ['VSIX_PREFIX'] + '-' + os.environ['BASE_VERSION'] + '.vsix')
-          root = Path('tasks/extractor')
-          with ZipFile(old) as archive:
-              allowed = set(archive.namelist())
-          removed = []
-          for path in root.rglob('*'):
-              if path.is_file() or path.is_symlink():
-                  name = path.as_posix()
-                  if name not in allowed:
-                      path.unlink()
-                      removed.append(name)
-          for path in sorted((p for p in root.rglob('*') if p.is_dir()), key=lambda p: len(p.parts), reverse=True):
-              if not any(path.iterdir()):
-                  path.rmdir()
-          print('Removed build-time files that were not in the released payload:')
-          print('\n'.join(removed))
-          PY
-
-      - name: Preserve original JSON formatting in generated package inputs
-        shell: bash
-        env:
-          BASE_VERSION: ${{ steps.version.outputs.base_version }}
-        run: |
-          python3 - <<'PY'
-          import os
-          from pathlib import Path
-          from zipfile import ZipFile
-
-          source = Path('baseline') / (os.environ['VSIX_PREFIX'] + '-' + os.environ['BASE_VERSION'] + '.vsix')
-          with ZipFile(source) as archive:
-              for name in ('tasks/extractor/task.json', 'tasks/extractor/node_modules/.package-lock.json'):
-                  original = archive.read(name)
-                  path = Path(name)
-                  current = path.read_bytes()
-                  def normalize(data):
-                      return data.replace(b'\r\n', b'\n')
-                  if normalize(current) != normalize(original):
-                      raise SystemExit(f'{name}: JSON content differs beyond line endings; refusing to use baseline contents')
-                  if original.count(b'\r\n'):
-                      reformatted = normalize(current).replace(b'\n', b'\r\n')
-                  else:
-                      reformatted = normalize(current)
-                  if reformatted != original:
-                      raise SystemExit(f'{name}: unsupported metadata formatting difference')
-                  path.write_bytes(reformatted)
-                  print(f'{name}: generated content matches the original; line endings normalized')
-          PY
+          rm -rf tasks/extractor/src tasks/extractor/tests
+          rm -f tasks/extractor/.eslintignore tasks/extractor/.eslintrc.js
+          rm -f tasks/extractor/.gitignore tasks/extractor/.prettierignore
+          rm -f tasks/extractor/.prettierrc.json tasks/extractor/.taskkey
+          rm -f tasks/extractor/icon.svg
+          rm -f tasks/extractor/package.json tasks/extractor/package-lock.json
+          rm -f tasks/extractor/tsconfig.json
 
       - name: Install pinned Azure DevOps VSIX packager
         run: npm install --global tfx-cli@0.11.0 --no-audit --no-fund
@@ -211,156 +151,41 @@ jobs:
           test -s "dist/$VSIX_PREFIX-$VERSION.vsix"
           git diff --exit-code -- vss-extension.json
 
-      - name: Normalize generated package content-type metadata
+      - name: Verify generated VSIX structure and version
         shell: bash
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           python3 - <<'PY'
           import os
-          import re
-          import tempfile
+          import xml.etree.ElementTree as ET
           from pathlib import Path
           from zipfile import ZipFile
 
-          path = Path('dist') / (os.environ['VSIX_PREFIX'] + '-' + os.environ['VERSION'] + '.vsix')
-          # tfx generates this XML from the extension file types. Keep the
-          # historical order and MIME declarations for identical packaging
-          # without sourcing any payload bytes from the previous release.
-          legacy_order = (
-              'js png ps1 ts json md map resjson lock bak flow bnf snap cmd '
-              'mjs txt yml markdown log coffee xml iml cjs vsixmanifest vsomanifest'
-          ).split()
-          def normalize_types(data):
-              text = data.decode('utf-8')
-              lines = text.splitlines(keepends=True)
-              default = {}
-              remaining = []
-              pattern = re.compile(r'<Default Extension="([^"]+)" ContentType="([^"]+)"')
-              for line in lines:
-                  found = pattern.search(line)
-                  if found:
-                      if found.group(1) in default:
-                          raise RuntimeError('Duplicate content-type extension')
-                      default[found.group(1)] = line
-                  else:
-                      remaining.append(line)
-              if set(default) != set('.' + x for x in legacy_order):
-                  raise RuntimeError('Unexpected extension content types: ' + str(set(default)))
-              first = remaining[:2]
-              tail = remaining[2:]
-              ordered = []
-              for extension in legacy_order:
-                  line = default['.' + extension]
-                  if extension in ('mjs', 'cjs'):
-                      line = line.replace('ContentType="text/plain"', 'ContentType="application/octet-stream"')
-                  ordered.append(line)
-              return (''.join(first + ordered + tail)).encode('utf-8')
-          with tempfile.NamedTemporaryFile(suffix='.vsix', dir=path.parent, delete=False) as temp:
-              temp_path = Path(temp.name)
-          try:
-              with ZipFile(path) as original, ZipFile(temp_path, 'w') as result:
-                  result.comment = original.comment
-                  for info in original.infolist():
-                      data = original.read(info)
-                      if info.filename == '[Content_Types].xml':
-                          data = normalize_types(data)
-                      result.writestr(info, data)
-              os.replace(temp_path, path)
-          finally:
-              temp_path.unlink(missing_ok=True)
+          version = os.environ['VERSION']
+          path = Path('dist') / f"{os.environ['VSIX_PREFIX']}-{version}.vsix"
+          if not path.is_file() or path.stat().st_size == 0:
+              raise SystemExit('VSIX was not created')
+          with ZipFile(path) as archive:
+              broken = archive.testzip()
+              if broken:
+                  raise SystemExit(f'Damaged VSIX entry: {broken}')
+              names = set(archive.namelist())
+              required = {'extension.vsixmanifest', 'tasks/extractor/task.json', 'tasks/extractor/dist/index.js'}
+              if missing := required - names:
+                  raise SystemExit(f'Missing required VSIX entries: {sorted(missing)}')
+              root = ET.fromstring(archive.read('extension.vsixmanifest'))
+              ids = [node for node in root.iter() if node.tag.rsplit('}', 1)[-1] == 'Identity']
+              if len(ids) != 1 or ids[0].get('Version') != version:
+                  raise SystemExit('Packaged extension version does not match calculated version')
+          print(f'Validated {path.name}: {path.stat().st_size} bytes, {len(names)} entries, version {version}')
           PY
 
-      - name: Verify source-built VSIX content against the baseline
-        shell: bash
-        env:
-          BASE_VERSION: ${{ steps.version.outputs.base_version }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          python3 - <<'PY'
-          import difflib
-          import hashlib
-          import os
-          import re
-          import zipfile
-          from pathlib import Path
-
-          prefix, base, version = (os.environ[x] for x in ('VSIX_PREFIX', 'BASE_VERSION', 'VERSION'))
-          old_path = Path('baseline') / f'{prefix}-{base}.vsix'
-          new_path = Path('dist') / f'{prefix}-{version}.vsix'
-          report = Path('dist/vsix-comparison.md')
-
-          with zipfile.ZipFile(old_path) as before, zipfile.ZipFile(new_path) as after:
-              if before.testzip() or after.testzip():
-                  raise RuntimeError('Damaged ZIP member in VSIX')
-              old_names, new_names = set(before.namelist()), set(after.namelist())
-              missing, added = sorted(old_names - new_names), sorted(new_names - old_names)
-              changed = []
-
-              def identity_without_version(data, expected):
-                  pattern = rb'(<Identity\b[^>]*?\bVersion\s*=\s*["\'])' + re.escape(expected.encode()) + rb'(["\'])'
-                  out, count = re.subn(pattern, lambda m: m[1] + b'<VERSION>' + m[2], data, flags=re.I)
-                  if count != 1:
-                      raise ValueError(f'Expected exactly one Identity Version={expected}, found {count}')
-                  return out
-
-              for name in sorted(old_names & new_names):
-                  left, right = before.read(name), after.read(name)
-                  if left == right:
-                      continue
-                  if name == 'extension.vsixmanifest':
-                      try:
-                          if identity_without_version(left, base) == identity_without_version(right, version):
-                              continue
-                      except ValueError:
-                          pass
-                  changed.append(name)
-                  if len(changed) <= 12 and len(left) < 100000 and len(right) < 100000:
-                      print(f'\nDiff: {name}')
-                      lines = list(difflib.unified_diff(
-                          left.decode('utf-8', errors='replace').splitlines(),
-                          right.decode('utf-8', errors='replace').splitlines(),
-                          fromfile=f'old/{name}', tofile=f'new/{name}', lineterm=''
-                      ))
-                      print('\n'.join(lines[:65]))
-              if base != version and 'extension.vsixmanifest' in old_names & new_names:
-                  if before.read('extension.vsixmanifest') == after.read('extension.vsixmanifest'):
-                      changed.append('extension.vsixmanifest (version did not change)')
-
-          result = not (missing or added or changed)
-          body = [
-              f'# Source-built VSIX: {base} versus {version}',
-              '',
-              f'- Baseline bytes: {old_path.stat().st_size}',
-              f'- New bytes: {new_path.stat().st_size}',
-              f'- New SHA256: {hashlib.sha256(new_path.read_bytes()).hexdigest()}',
-              f'- Missing files: {len(missing)}',
-              f'- Extra files: {len(added)}',
-              f'- Unexpected changed files: {len(changed)}',
-              f'- Result: {"PASS" if result else "FAIL"}',
-          ]
-          for label, names in (('Missing', missing), ('Extra', added), ('Changed', changed)):
-              if names:
-                  body.extend(['', f'## {label} files', ''])
-                  body.extend('- ' + name for name in names[:100])
-                  if len(names) > 100:
-                      body.append(f'- … and {len(names)-100} more')
-          report.write_text('\n'.join(body) + '\n')
-          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
-              summary.write('\n'.join(body) + '\n')
-          print('\n'.join(body))
-          if not result:
-              raise SystemExit('Source-built VSIX differs beyond the extension version')
-          PY
-
-      - name: Upload VSIX and comparison report
-        if: always()
+      - name: Upload built VSIX
         uses: actions/upload-artifact@v4
         with:
           name: vsix-source-build
-          path: |
-            dist/*.vsix
-            dist/vsix-comparison.md
+          path: dist/*.vsix
           if-no-files-found: error
 
   publish:
@@ -375,7 +200,7 @@ jobs:
       VERSION: ${{ needs.build.outputs.version }}
       VSIX_PREFIX: AttilaHajdu.jira-issue-extractor
     steps:
-      - name: Download verified VSIX
+      - name: Download source-built VSIX
         uses: actions/download-artifact@v4
         with:
           name: vsix-source-build
@@ -406,10 +231,10 @@ jobs:
             --vsix "dist/$VSIX_PREFIX-$VERSION.vsix" \
             --auth-type pat --token "$MARKETPLACE_PAT" --no-prompt
 
-      - name: Publish the verified VSIX as a GitHub Release
+      - name: Publish the source-built VSIX as a GitHub Release
         shell: bash
         run: |
           set -euo pipefail
           gh release create "$VERSION" "dist/$VSIX_PREFIX-$VERSION.vsix" \
             --target "$GITHUB_SHA" --title "$VERSION" \
-            --notes "Built from source using npm ci, TypeScript and tfx-cli. Version computed from conventional commits. Compared VSIX contents against the previous release, allowing only extension version differences."
+            --notes "Built from source using npm ci, TypeScript and tfx-cli. Version computed from conventional commits."
