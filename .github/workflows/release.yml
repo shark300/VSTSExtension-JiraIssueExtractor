@@ -210,4 +210,4 @@ jobs:
           set -euo pipefail
           gh release create "$VERSION" "dist/$VSIX_PREFIX-$VERSION.vsix" \
             --target "$GITHUB_SHA" --title "$VERSION" \
-            --notes "Built from source using npm ci, TypeScript and tfx-cli. Version computed from conventional commits."
+            --notes ""
