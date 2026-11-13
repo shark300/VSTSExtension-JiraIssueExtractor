@@ -106,7 +106,7 @@ jobs:
       - name: Install Azure DevOps VSIX packager
         run: npm install --global tfx-cli@0.11.0 --no-audit --no-fund
 
-      - name: Package from source without modifying the manifest
+      - name: Build package
         shell: bash
         env:
           VERSION: ${{ steps.version.outputs.version }}
