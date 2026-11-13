@@ -159,7 +159,10 @@ jobs:
           if-no-files-found: error
 
   publish:
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && needs.build.outputs.has_version_bump == 'true'
+    if: >-
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      github.ref == 'refs/heads/main' &&
+      needs.build.outputs.has_version_bump == 'true'
     needs: build
     runs-on: ubuntu-22.04
     permissions:
