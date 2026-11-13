@@ -36,7 +36,7 @@ jobs:
       - name: Set up Node.js for git-cliff
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install git-cliff
         run: npm install --global git-cliff@2.14.2 --no-audit --no-fund
@@ -65,7 +65,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '16.15.1'
+          node-version: "16.15.1"
           cache: npm
           cache-dependency-path: tasks/extractor/package-lock.json
 
@@ -75,13 +75,6 @@ jobs:
       - name: Install task dependencies
         run: npm ci --no-audit --no-fund
         working-directory: tasks/extractor
-
-      - name: Show the exact Prettier formatting diff
-        shell: bash
-        run: |
-          set -euo pipefail
-          ./tasks/extractor/node_modules/.bin/prettier --write .github/workflows/release.yml
-          git diff -- .github/workflows/release.yml || true
 
       - name: Compile TypeScript
         run: |
