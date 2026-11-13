@@ -76,6 +76,13 @@ jobs:
         run: npm ci --no-audit --no-fund
         working-directory: tasks/extractor
 
+      - name: Show the exact Prettier formatting diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./tasks/extractor/node_modules/.bin/prettier --write .github/workflows/release.yml
+          git diff -- .github/workflows/release.yml || true
+
       - name: Compile TypeScript
         run: |
           npm install --global typescript@4.7.4 --no-audit --no-fund
