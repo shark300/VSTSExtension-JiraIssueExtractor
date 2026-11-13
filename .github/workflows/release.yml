@@ -41,7 +41,6 @@ jobs:
           node-version: '24'
 
       - name: Install git-cliff
-        if: github.event_name != 'pull_request'
         run: npm install --global git-cliff@2.14.2 --no-audit --no-fund
 
       - name: Calculate SemVer with git-cliff
@@ -49,26 +48,31 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          BASE_VERSION="$(git-cliff --config .github/cliff.toml --use-branch-tags --bumped-version)"
+          [[ "$BASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+            echo "::error::git-cliff returned an invalid base version: $BASE_VERSION"
+            exit 1
+          }
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            VERSION="2.0.$GITHUB_RUN_NUMBER"
+            # VSIX Identity.Version requires numeric components; keep SemVer prerelease in the filename.
+            VERSION="$BASE_VERSION.$GITHUB_RUN_NUMBER"
+            ARTIFACT_VERSION="$BASE_VERSION-$GITHUB_RUN_NUMBER"
             HAS_VERSION_BUMP=false
           else
-            VERSION="$(git-cliff --config .github/cliff.toml --use-branch-tags --bumped-version)"
+            VERSION="$BASE_VERSION"
+            ARTIFACT_VERSION="$BASE_VERSION"
             if git rev-parse --verify -q "refs/tags/$VERSION" >/dev/null; then
               HAS_VERSION_BUMP=false
             else
               HAS_VERSION_BUMP=true
             fi
           fi
-          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
-            echo "::error::git-cliff returned an invalid release version: $VERSION"
-            exit 1
-          }
           {
             echo "version=$VERSION"
+            echo "artifact_version=$ARTIFACT_VERSION"
             echo "has_version_bump=$HAS_VERSION_BUMP"
           } >> "$GITHUB_OUTPUT"
-          echo "git-cliff version: $VERSION; version bump: $HAS_VERSION_BUMP"
+          echo "Base version: $BASE_VERSION; VSIX version: $VERSION; artifact version: $ARTIFACT_VERSION; version bump: $HAS_VERSION_BUMP"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -136,21 +140,23 @@ jobs:
         shell: bash
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          ARTIFACT_VERSION: ${{ steps.version.outputs.artifact_version }}
         run: |
           set -euo pipefail
           mkdir -p dist
           tfx extension create \
             --manifest-globs "$MANIFEST_FILE" \
             --override "{\"version\":\"$VERSION\"}" \
-            --output-path "dist/$VSIX_PREFIX-$VERSION.vsix" \
+            --output-path "dist/$VSIX_PREFIX-$ARTIFACT_VERSION.vsix" \
             --no-prompt
-          test -s "dist/$VSIX_PREFIX-$VERSION.vsix"
+          test -s "dist/$VSIX_PREFIX-$ARTIFACT_VERSION.vsix"
           git diff --exit-code -- vss-extension.json
 
       - name: Verify generated VSIX structure and version
         shell: bash
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          ARTIFACT_VERSION: ${{ steps.version.outputs.artifact_version }}
         run: |
           python3 - <<'PY'
           import os
@@ -159,7 +165,7 @@ jobs:
           from zipfile import ZipFile
 
           version = os.environ['VERSION']
-          path = Path('dist') / f"{os.environ['VSIX_PREFIX']}-{version}.vsix"
+          path = Path('dist') / f"{os.environ['VSIX_PREFIX']}-{os.environ['ARTIFACT_VERSION']}.vsix"
           if not path.is_file() or path.stat().st_size == 0:
               raise SystemExit('VSIX was not created')
           with ZipFile(path) as archive:
