@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   build:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: windows-2022
     defaults:
       run:
@@ -22,7 +23,8 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
-      VSIX_PREFIX: AttilaHajdu.jira-issue-extractor
+      VSIX_PREFIX: ${{ github.event_name == 'pull_request' && 'AttilaHajdu.jira-issue-extractor-dev' || 'AttilaHajdu.jira-issue-extractor' }}
+      MANIFEST_FILE: ${{ github.event_name == 'pull_request' && 'vss-extension.dev.json' || 'vss-extension.json' }}
     steps:
       - name: Preserve source file line endings on Windows
         run: git config --global core.autocrlf false
@@ -39,6 +41,7 @@ jobs:
           node-version: '24'
 
       - name: Install git-cliff
+        if: github.event_name != 'pull_request'
         run: npm install --global git-cliff@2.14.2 --no-audit --no-fund
 
       - name: Calculate SemVer with git-cliff
@@ -46,16 +49,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          VERSION="$(git-cliff --config .github/cliff.toml --use-branch-tags --bumped-version)"
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            VERSION="2.0.$GITHUB_RUN_NUMBER"
+            HAS_VERSION_BUMP=false
+          else
+            VERSION="$(git-cliff --config .github/cliff.toml --use-branch-tags --bumped-version)"
+            if git rev-parse --verify -q "refs/tags/$VERSION" >/dev/null; then
+              HAS_VERSION_BUMP=false
+            else
+              HAS_VERSION_BUMP=true
+            fi
+          fi
           [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
             echo "::error::git-cliff returned an invalid release version: $VERSION"
             exit 1
           }
-          if git rev-parse --verify -q "refs/tags/$VERSION" >/dev/null; then
-            HAS_VERSION_BUMP=false
-          else
-            HAS_VERSION_BUMP=true
-          fi
           {
             echo "version=$VERSION"
             echo "has_version_bump=$HAS_VERSION_BUMP"
@@ -100,6 +108,30 @@ jobs:
       - name: Install Azure DevOps VSIX packager
         run: npm install --global tfx-cli@0.11.0 --no-audit --no-fund
 
+      - name: Prepare isolated private dev extension for PR
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path('vss-extension.json').read_text(encoding='utf-8'))
+          manifest['id'] = 'jira-issue-extractor-dev'
+          manifest['name'] = 'Jira Issue Extractor Dev'
+          manifest['public'] = False
+          for contribution in manifest['contributions']:
+              contribution['id'] += '-dev'
+          Path('vss-extension.dev.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+
+          task_path = Path('tasks/extractor/task.json')
+          task = json.loads(task_path.read_text(encoding='utf-8'))
+          task['id'] = 'e74abf75-8b4f-4d1f-bc17-47f109d2ad42'
+          task['name'] = 'JiraIssueKeyExtractorDev'
+          task['friendlyName'] = 'Jira Issue Key Extractor Dev'
+          task_path.write_text(json.dumps(task, indent=2) + '\n', encoding='utf-8')
+          PY
+
       - name: Build package
         shell: bash
         env:
@@ -108,7 +140,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           tfx extension create \
-            --manifest-globs vss-extension.json \
+            --manifest-globs "$MANIFEST_FILE" \
             --override "{\"version\":\"$VERSION\"}" \
             --output-path "dist/$VSIX_PREFIX-$VERSION.vsix" \
             --no-prompt
@@ -142,6 +174,10 @@ jobs:
               task = json.loads(archive.read('tasks/extractor/task.json'))
               if set(task.get('execution', {})) != {'Node24'}:
                   raise SystemExit('Packaged task does not exclusively target Node24')
+              is_dev = os.environ['GITHUB_EVENT_NAME'] == 'pull_request'
+              expected_task_name = 'JiraIssueKeyExtractorDev' if is_dev else 'JiraIssueKeyExtractor'
+              if task.get('name') != expected_task_name:
+                  raise SystemExit(f'Unexpected packaged task name: {task.get("name")}')
               task_version = task.get('version', {})
               if not all(isinstance(task_version.get(k), int) for k in ('Major', 'Minor', 'Patch')):
                   raise SystemExit('Invalid packaged task version')
@@ -149,13 +185,16 @@ jobs:
               ids = [node for node in root.iter() if node.tag.rsplit('}', 1)[-1] == 'Identity']
               if len(ids) != 1 or ids[0].get('Version') != version:
                   raise SystemExit('Packaged extension version does not match calculated version')
+              expected_extension_id = 'jira-issue-extractor-dev' if is_dev else 'jira-issue-extractor'
+              if ids[0].get('Id') != expected_extension_id:
+                  raise SystemExit(f'Unexpected extension ID: {ids[0].get("Id")}')
           print(f'Validated {path.name}: {path.stat().st_size} bytes, {len(names)} entries, version {version}')
           PY
 
       - name: Upload built VSIX
         uses: actions/upload-artifact@v4
         with:
-          name: vsix-source-build
+          name: ${{ github.event_name == 'pull_request' && 'vsix-dev' || 'vsix-source-build' }}
           path: dist/*.vsix
           if-no-files-found: error
 
