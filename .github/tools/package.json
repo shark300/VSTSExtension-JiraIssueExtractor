@@ -9,7 +9,7 @@
   },
   "overrides": {
     "readdir-glob": {
-      "minimatch": "6.2.2"
+      "minimatch": "6.2.3"
     }
   }
 }
