@@ -21,6 +21,15 @@ updates:
           - minor
           - patch
 
+  - package-ecosystem: npm
+    directory: /.github/tools
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: ci
+      include: scope
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
