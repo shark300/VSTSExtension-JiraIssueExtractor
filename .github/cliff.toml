@@ -1,5 +1,5 @@
 # Conventional Commits -> SemVer; used only by the release workflow.
-# git-cliff is pinned to 2.14.2 in release.yml.
+# git-cliff is pinned in .github/tools/package.json.
 # Only changes affecting the shipped task should bump the extension version.
 
 [git]
