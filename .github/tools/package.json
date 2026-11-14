@@ -8,6 +8,12 @@
     "tfx-cli": "0.24.2"
   },
   "overrides": {
+    "tfx-cli": {
+      "glob": "14.0.6"
+    },
+    "archiver-utils": {
+      "glob": "14.0.6"
+    },
     "readdir-glob": {
       "minimatch": "6.2.3"
     }
