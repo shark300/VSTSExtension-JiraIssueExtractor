@@ -23,8 +23,8 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
-      VSIX_PREFIX: ${{ github.event_name == 'pull_request' && 'AttilaHajdu.jira-issue-extractor-dev' || 'AttilaHajdu.jira-issue-extractor' }}
-      MANIFEST_FILE: ${{ github.event_name == 'pull_request' && 'vss-extension.dev.json' || 'vss-extension.json' }}
+      VSIX_PREFIX: ${{ github.event_name != 'workflow_dispatch' && 'AttilaHajdu.jira-issue-extractor-dev' || 'AttilaHajdu.jira-issue-extractor' }}
+      MANIFEST_FILE: ${{ github.event_name != 'workflow_dispatch' && 'vss-extension.dev.json' || 'vss-extension.json' }}
     steps:
       - name: Preserve source file line endings on Windows
         run: git config --global core.autocrlf false
@@ -53,7 +53,7 @@ jobs:
             echo "::error::git-cliff returned an invalid base version: $BASE_VERSION"
             exit 1
           }
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+          if [ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]; then
             # VSIX Identity.Version requires numeric components; keep SemVer prerelease in the filename.
             VERSION="$BASE_VERSION.$GITHUB_RUN_NUMBER"
             ARTIFACT_VERSION="$BASE_VERSION-$GITHUB_RUN_NUMBER"
@@ -112,8 +112,8 @@ jobs:
       - name: Install Azure DevOps VSIX packager
         run: npm install --global tfx-cli@0.11.0 --no-audit --no-fund
 
-      - name: Prepare isolated private dev extension for PR
-        if: github.event_name == 'pull_request'
+      - name: Prepare isolated private dev extension for non-release builds
+        if: github.event_name != 'workflow_dispatch'
         shell: bash
         run: |
           python3 - <<'PY'
@@ -180,7 +180,7 @@ jobs:
               task = json.loads(archive.read('tasks/extractor/task.json'))
               if set(task.get('execution', {})) != {'Node24'}:
                   raise SystemExit('Packaged task does not exclusively target Node24')
-              is_dev = os.environ['GITHUB_EVENT_NAME'] == 'pull_request'
+              is_dev = os.environ['GITHUB_EVENT_NAME'] != 'workflow_dispatch'
               expected_task_name = 'JiraIssueKeyExtractorDev' if is_dev else 'JiraIssueKeyExtractor'
               if task.get('name') != expected_task_name:
                   raise SystemExit(f'Unexpected packaged task name: {task.get("name")}')
@@ -200,7 +200,7 @@ jobs:
       - name: Upload built VSIX
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.event_name == 'pull_request' && 'vsix-dev' || 'vsix-source-build' }}
+          name: ${{ github.event_name != 'workflow_dispatch' && 'vsix-dev' || 'vsix-source-build' }}
           path: dist/*.vsix
           if-no-files-found: error
 
