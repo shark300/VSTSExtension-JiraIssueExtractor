@@ -43,7 +43,7 @@
     "ts-sinon": "^2.0.2",
     "tsc-alias": "^1.6.7",
     "tsconfig-paths": "^3.14.1",
-    "@types/node": "^24.0.0",
+    "@types/node": "^26.6.6",
     "typescript": "^5.9.3"
   },
   "engines": {
