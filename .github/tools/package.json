@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "Build-time tools for packaging and publishing the Azure DevOps extension",
   "devDependencies": {
+    "git-cliff": "2.14.2",
     "tfx-cli": "0.24.2"
   }
 }

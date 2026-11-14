@@ -40,15 +40,15 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Install git-cliff
-        run: npm install --global git-cliff@2.14.2 --no-audit --no-fund
+      - name: Install build tools
+        run: npm install --prefix .github/tools --no-audit --no-fund
 
       - name: Calculate SemVer with git-cliff
         id: version
         shell: bash
         run: |
           set -euo pipefail
-          BASE_VERSION="$(git-cliff --config .github/cliff.toml --use-branch-tags --bumped-version)"
+          BASE_VERSION="$(.github/tools/node_modules/.bin/git-cliff --config .github/cliff.toml --use-branch-tags --bumped-version)"
           [[ "$BASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
             echo "::error::git-cliff returned an invalid base version: $BASE_VERSION"
             exit 1
@@ -108,9 +108,6 @@ jobs:
           rm -f tasks/extractor/icon.svg
           rm -f tasks/extractor/package.json tasks/extractor/package-lock.json
           rm -f tasks/extractor/tsconfig.json
-
-      - name: Install Azure DevOps VSIX packager
-        run: npm install --prefix .github/tools --no-audit --no-fund
 
       - name: Prepare isolated private dev extension for non-release builds
         if: github.event_name != 'workflow_dispatch'
