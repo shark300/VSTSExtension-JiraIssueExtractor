@@ -48,5 +48,15 @@
   },
   "engines": {
     "node": ">=24"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "11.0.8"
+    },
+    "mocha": {
+      "minimatch": "11.0.8",
+      "serialize-javascript": "7.1.4"
+    },
+    "braces": "3.0.3"
   }
 }
