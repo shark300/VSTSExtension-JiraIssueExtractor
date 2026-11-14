@@ -17,7 +17,7 @@
     "test:watch": "ts-mocha --paths tests/unit/*.test.ts -w --watch-files **/*.ts",
     "lint:check": "eslint ../.. && prettier --check ../.. --ignore-path ../../.prettierignore",
     "lint:fix": "eslint ../.. --fix && prettier --write ../.. --ignore-path ../../.prettierignore",
-    "prepare": "cd ../.. && husky install",
+    "prepare": "cd ../.. && husky",
     "build": "tsc && tsc-alias"
   },
   "keywords": [],
