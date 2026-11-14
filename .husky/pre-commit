@@ -1,6 +1,3 @@
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-
 cd tasks || exit
 cd extractor || exit
 npm run lint:check
