@@ -19,7 +19,7 @@ describe("Commit extractor", function () {
   beforeEach(() => {
     branchNameExtractor = new CommitExtractor(
       commitMessageProviderMock,
-      loggerMock
+      loggerMock,
     );
   });
 
@@ -35,7 +35,7 @@ describe("Commit extractor", function () {
       // when
       const actual = await branchNameExtractor.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -51,7 +51,7 @@ describe("Commit extractor", function () {
       // when
       const actual = await branchNameExtractor.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -67,7 +67,7 @@ describe("Commit extractor", function () {
       // when
       const actual = await branchNameExtractor.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -85,7 +85,7 @@ describe("Commit extractor", function () {
       // when
       const actual = await branchNameExtractor.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -109,7 +109,7 @@ Merge in shark300/VSTSExtension-JiraIssueExtractor from feature/JIE-1223-sample-
       // when
       const actual = await branchNameExtractor.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -148,7 +148,7 @@ JIE-225: sample commit message`,
       // when
       const actual = await branchNameExtractor.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -173,7 +173,7 @@ This reverts commit e0606f39f65a98ec55b8f66dfcfaa1deba5377ba.`,
       // when
       const actual = await branchNameExtractor.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then

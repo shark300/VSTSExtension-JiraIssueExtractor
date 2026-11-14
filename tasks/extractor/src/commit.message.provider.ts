@@ -7,13 +7,16 @@ import * as winston from "winston";
 import { Pipeline } from "@/pipeline";
 
 export class CommitMessageProvider {
-  constructor(public pipeline: Pipeline, public logger: winston.Logger) {}
+  constructor(
+    public pipeline: Pipeline,
+    public logger: winston.Logger,
+  ) {}
 
   async getCommitMessages(project: string, buildId: number): Promise<string[]> {
     this.logger.info(
       "Getting commit messages for %s with buildId: %s",
       project,
-      buildId
+      buildId,
     );
 
     const vsts: vm.WebApi = await this.pipeline.getWebApi();
@@ -46,7 +49,7 @@ export class CommitMessageProvider {
       this.logger.info(
         "Get commit for hash: %s at repositoryId: %s",
         commitHash,
-        repositoryId
+        repositoryId,
       );
       const commit = await vstsGit.getCommit(commitHash, repositoryId);
       changes.push(commit.comment);

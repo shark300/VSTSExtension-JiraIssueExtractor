@@ -23,7 +23,7 @@ describe("Branch name provider", function () {
   beforeEach(() => {
     branchNameProvider = new BranchNameProvider(
       pullRequestProviderMock,
-      loggerMock
+      loggerMock,
     );
 
     gitPullRequest = {
@@ -42,7 +42,7 @@ describe("Branch name provider", function () {
       // when
       const actual = await branchNameProvider.getBranchName(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then

@@ -5,19 +5,19 @@ import { PullRequestProvider } from "@/pullrequest.provider";
 export class BranchNameProvider {
   constructor(
     public pullRequestProvider: PullRequestProvider,
-    public logger: winston.Logger
+    public logger: winston.Logger,
   ) {}
 
   async getBranchName(project: string, buildId: number): Promise<string> {
     this.logger.info(
       "Getting branch for %s with buildId: %s",
       project,
-      buildId
+      buildId,
     );
 
     const pullRequest = await this.pullRequestProvider.getPullRequest(
       project,
-      buildId
+      buildId,
     );
     const branchName = pullRequest?.sourceRefName as string;
 

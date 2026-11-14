@@ -94,7 +94,7 @@ describe("Commit message provider", function () {
 
           // when + then
           await expect(
-            commitMessageProvider.getCommitMessages(dummyProject, dummyBuildId)
+            commitMessageProvider.getCommitMessages(dummyProject, dummyBuildId),
           ).to.eventually.be.rejectedWith("IndividualCI is supported only");
         });
       });
@@ -107,7 +107,7 @@ describe("Commit message provider", function () {
       // when
       const actual = await commitMessageProvider.getCommitMessages(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then

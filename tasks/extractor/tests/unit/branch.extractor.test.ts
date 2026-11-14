@@ -19,7 +19,7 @@ describe("Branch extractor", function () {
   beforeEach(() => {
     branchNameExtractor = new BranchExtractor(
       branchNameProviderMock,
-      loggerMock
+      loggerMock,
     );
   });
 
@@ -33,7 +33,7 @@ describe("Branch extractor", function () {
       // when
       const actual = await branchNameExtractor.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -49,7 +49,7 @@ describe("Branch extractor", function () {
       // when
       const actual = await branchNameExtractor.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -65,7 +65,7 @@ describe("Branch extractor", function () {
       // when
       const actual = await branchNameExtractor.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -81,7 +81,7 @@ describe("Branch extractor", function () {
       // when
       const actual = await branchNameExtractor.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -97,7 +97,7 @@ describe("Branch extractor", function () {
       // when
       const actual = await branchNameExtractor.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -113,7 +113,7 @@ describe("Branch extractor", function () {
       // when
       const actual = await branchNameExtractor.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -129,7 +129,7 @@ describe("Branch extractor", function () {
       // when
       const actual = await branchNameExtractor.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -145,7 +145,7 @@ describe("Branch extractor", function () {
       // when
       const actual = await branchNameExtractor.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -161,7 +161,7 @@ describe("Branch extractor", function () {
       // when
       const actual = await branchNameExtractor.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -177,7 +177,7 @@ describe("Branch extractor", function () {
       // when
       const actual = await branchNameExtractor.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -193,7 +193,7 @@ describe("Branch extractor", function () {
       // when
       const actual = await branchNameExtractor.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then

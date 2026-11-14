@@ -6,22 +6,22 @@ import { IExtractApi } from "@/ExtractApi";
 export class CommitExtractor implements IExtractApi {
   constructor(
     public commitMessageProvider: CommitMessageProvider,
-    public logger: winston.Logger
+    public logger: winston.Logger,
   ) {}
 
   async getJiraKeys(project: string, buildId: number): Promise<string[]> {
     this.logger.info(
       "Extracting Jira keys from changes for %s with buildId: %s",
       project,
-      buildId
+      buildId,
     );
 
     const messages = await this.commitMessageProvider.getCommitMessages(
       project,
-      buildId
+      buildId,
     );
     const jiraKeys = messages.flatMap((message) =>
-      this.extractJiraKeys(message)
+      this.extractJiraKeys(message),
     );
 
     this.logger.info("Extracted Jira keys from changes: %s", jiraKeys);

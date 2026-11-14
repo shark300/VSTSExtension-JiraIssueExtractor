@@ -21,7 +21,7 @@ describe("Extractor service", function () {
   beforeEach(() => {
     extractorService = new ExtractorService(
       [firstExtractorMock, secondExtractorMock],
-      loggerMock
+      loggerMock,
     );
   });
 
@@ -38,7 +38,7 @@ describe("Extractor service", function () {
       // when
       const actual = await extractorService.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -57,7 +57,7 @@ describe("Extractor service", function () {
       // when
       const actual = await extractorService.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -76,7 +76,7 @@ describe("Extractor service", function () {
       // when
       const actual = await extractorService.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -95,7 +95,7 @@ describe("Extractor service", function () {
       // when
       const actual = await extractorService.getJiraKeys(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then

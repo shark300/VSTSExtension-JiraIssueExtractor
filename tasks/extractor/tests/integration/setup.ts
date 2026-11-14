@@ -16,7 +16,7 @@ tmr.registerMock("typed-rest-client/RestClient", {
   RestClient: function () {
     return {
       options: async function (
-        requestUrl: string
+        requestUrl: string,
       ): Promise<IRestResponse<IWebApiArrayResult>> {
         if (
           requestUrl === "https://my-azure-server/myorganization/_apis/Location"
@@ -130,7 +130,7 @@ tmr.registerMock("typed-rest-client/RestClient", {
         } else throw Error(`Unexpected REST options: ${requestUrl}`);
       },
       get: async function (
-        resource: string
+        resource: string,
       ): Promise<
         IRestResponse<
           ConnectionData | IWebApiArrayResult | Build | GitCommitRef

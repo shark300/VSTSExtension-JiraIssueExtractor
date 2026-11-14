@@ -6,11 +6,11 @@ import * as ttm from "azure-pipelines-task-lib/mock-test";
 describe("Extract Jira keys", function () {
   function getVariable(
     testRunner: ttm.MockTestRunner,
-    variableName: string
+    variableName: string,
   ): string | undefined {
     const parseVariableValue = new RegExp(
       `##vso\\[task\\.setvariable variable=${variableName};isOutput=true;issecret=false;\\](.*)$`,
-      "m"
+      "m",
     );
     const match = testRunner.stdout.match(parseVariableValue);
     if (match) {

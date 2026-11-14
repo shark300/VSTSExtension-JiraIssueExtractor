@@ -94,7 +94,7 @@ describe("Pull Request provider", function () {
 
           // when + then
           await expect(
-            branchNameProvider.getPullRequest(dummyProject, dummyBuildId)
+            branchNameProvider.getPullRequest(dummyProject, dummyBuildId),
           ).to.eventually.be.rejectedWith("IndividualCI is supported only");
         });
       });
@@ -108,9 +108,9 @@ describe("Pull Request provider", function () {
 
         // when + then
         await expect(
-          branchNameProvider.getPullRequest(dummyProject, dummyBuildId)
+          branchNameProvider.getPullRequest(dummyProject, dummyBuildId),
         ).to.eventually.be.rejectedWith(
-          "TfsGit Repository type is supported only"
+          "TfsGit Repository type is supported only",
         );
       });
     });
@@ -123,7 +123,7 @@ describe("Pull Request provider", function () {
       // when
       const actual = await branchNameProvider.getPullRequest(
         dummyProject,
-        dummyBuildId
+        dummyBuildId,
       );
 
       // then
@@ -141,9 +141,9 @@ describe("Pull Request provider", function () {
 
       // when + then
       await expect(
-        branchNameProvider.getPullRequest(dummyProject, dummyBuildId)
+        branchNameProvider.getPullRequest(dummyProject, dummyBuildId),
       ).to.eventually.be.rejectedWith(
-        `Pull Request not found for ${dummyProject} project and ${dummyBuildId} buildId`
+        `Pull Request not found for ${dummyProject} project and ${dummyBuildId} buildId`,
       );
     });
   });

@@ -28,7 +28,7 @@ export class Pipeline {
     const connData: lim.ConnectionData = await vsts.connect();
     this.logger.info(
       "Welcome to %s",
-      connData.authenticatedUser?.providerDisplayName
+      connData.authenticatedUser?.providerDisplayName,
     );
     return vsts;
   }

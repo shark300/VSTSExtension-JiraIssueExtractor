@@ -8,11 +8,14 @@ import * as winston from "winston";
 import { Pipeline } from "@/pipeline";
 
 export class PullRequestProvider {
-  constructor(public pipeline: Pipeline, public logger: winston.Logger) {}
+  constructor(
+    public pipeline: Pipeline,
+    public logger: winston.Logger,
+  ) {}
 
   async getPullRequest(
     project: string,
-    buildId: number
+    buildId: number,
   ): Promise<gi.GitPullRequest> {
     const vsts: vm.WebApi = await this.pipeline.getWebApi();
     const vstsBuild: ba.IBuildApi = await vsts.getBuildApi();
@@ -34,7 +37,7 @@ export class PullRequestProvider {
     this.logger.info(
       "Searching for Pull Request for %s sourceVersion at repositoryId: %s",
       sourceVersion,
-      repositoryId
+      repositoryId,
     );
 
     const vstsGit: gitm.IGitApi = await vsts.getGitApi();
@@ -48,21 +51,21 @@ export class PullRequestProvider {
 
     const firstMatchingPullRequestForBuild = pullRequests
       .filter(
-        (pullRequest) => pullRequest.lastMergeCommit?.commitId == sourceVersion
+        (pullRequest) => pullRequest.lastMergeCommit?.commitId == sourceVersion,
       )
       .find((v) => v);
 
     if (firstMatchingPullRequestForBuild) {
       this.logger.info(
         "Found Pull Request with pullRequestId: %s",
-        firstMatchingPullRequestForBuild.pullRequestId
+        firstMatchingPullRequestForBuild.pullRequestId,
       );
       return firstMatchingPullRequestForBuild;
     } else {
       return Promise.reject(
         new Error(
-          `Pull Request not found for ${project} project and ${buildId} buildId`
-        )
+          `Pull Request not found for ${project} project and ${buildId} buildId`,
+        ),
       );
     }
   }

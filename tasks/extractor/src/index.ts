@@ -17,7 +17,7 @@ async function run() {
           return `${timestamp} ${level} [component: ${component}]: ${message}`;
         }
         return `${timestamp} ${level} []: ${message}`;
-      }
+      },
     );
 
     const mainLogger = createLogger({
@@ -29,7 +29,7 @@ async function run() {
         }),
         format.errors({ stack: true }),
         format.splat(),
-        myFormat
+        myFormat,
       ),
       transports: [new transports.Console()],
     });
@@ -43,35 +43,35 @@ async function run() {
 
     const pullRequestProvider = new PullRequestProvider(
       pipeline,
-      branchNameLogger
+      branchNameLogger,
     );
 
     const branchNameProvider = new BranchNameProvider(
       pullRequestProvider,
-      branchNameLogger
+      branchNameLogger,
     );
     const branchExtractor = new BranchExtractor(
       branchNameProvider,
-      branchNameLogger
+      branchNameLogger,
     );
 
     const commitMessageProvider = new CommitMessageProvider(
       pipeline,
-      commitsLogger
+      commitsLogger,
     );
     const commitExtractor = new CommitExtractor(
       commitMessageProvider,
-      commitsLogger
+      commitsLogger,
     );
 
     const extractorService = new ExtractorService(
       [branchExtractor, commitExtractor],
-      mainLogger
+      mainLogger,
     );
 
     const jiraKeys = await extractorService.getJiraKeys(
       pipeline.getProject(),
-      pipeline.getBuildId()
+      pipeline.getBuildId(),
     );
 
     mainLogger.info("All extracted Jira keys: %s", jiraKeys);
