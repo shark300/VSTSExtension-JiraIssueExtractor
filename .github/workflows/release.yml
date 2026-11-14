@@ -110,7 +110,7 @@ jobs:
           rm -f tasks/extractor/tsconfig.json
 
       - name: Install Azure DevOps VSIX packager
-        run: npm install --global tfx-cli@0.11.0 --no-audit --no-fund
+        run: npm install --prefix .github/tools --no-audit --no-fund
 
       - name: Prepare isolated private dev extension for non-release builds
         if: github.event_name != 'workflow_dispatch'
@@ -144,7 +144,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          tfx extension create \
+          .github/tools/node_modules/.bin/tfx extension create \
             --manifest-globs "$MANIFEST_FILE" \
             --override "{\"version\":\"$VERSION\"}" \
             --output-path "dist/$VSIX_PREFIX-$ARTIFACT_VERSION.vsix" \
@@ -246,8 +246,8 @@ jobs:
             echo "::notice::Marketplace upload skipped: MARKETPLACE_PAT secret missing."
             exit 0
           fi
-          npm install --global tfx-cli@0.11.0 --no-audit --no-fund
-          tfx extension publish --publisher AttilaHajdu \
+          npm install --prefix .github/tools --no-audit --no-fund
+          .github/tools/node_modules/.bin/tfx extension publish --publisher AttilaHajdu \
             --vsix "dist/$VSIX_PREFIX-$VERSION.vsix" \
             --auth-type pat --token "$MARKETPLACE_PAT" --no-prompt
 
