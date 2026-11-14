@@ -6,5 +6,10 @@
   "devDependencies": {
     "git-cliff": "2.14.2",
     "tfx-cli": "0.24.2"
+  },
+  "overrides": {
+    "readdir-glob": {
+      "minimatch": "6.2.2"
+    }
   }
 }
