@@ -33,7 +33,7 @@
     "chai-as-promised": "^7.1.1",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^8.5.0",
-    "husky": "^7.0.0",
+    "husky": "^9.1.7",
     "nyc": "^18.0.0",
     "prettier": "^3.9.10",
     "sinon": "^13.0.2",
