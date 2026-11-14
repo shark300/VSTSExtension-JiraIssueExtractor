@@ -1,0 +1,9 @@
+{
+  "name": "azure-devops-extension-build-tools",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Build-time tools for packaging and publishing the Azure DevOps extension",
+  "devDependencies": {
+    "tfx-cli": "0.24.2"
+  }
+}
