@@ -12,7 +12,7 @@
     "winston": "^3.7.2"
   },
   "scripts": {
-    "integrationTest": "npm run build && tsc tests/integration/setup.ts && ts-mocha --paths tests/integration/*.test.ts",
+    "integrationTest": "npm run build && tsc tests/integration/setup.ts && ts-mocha --file ./tests/unit/chai-setup.mjs --paths tests/integration/*.test.ts",
     "test": "ts-mocha --file ./tests/unit/chai-setup.mjs --paths tests/unit/*.test.ts",
     "test:watch": "ts-mocha --file ./tests/unit/chai-setup.mjs --paths tests/unit/*.test.ts -w --watch-files **/*.ts",
     "lint:check": "eslint ../.. && prettier --check ../.. --ignore-path ../../.prettierignore",
