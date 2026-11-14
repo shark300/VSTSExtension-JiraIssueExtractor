@@ -104,8 +104,7 @@ jobs:
           rm -rf tasks/extractor/src tasks/extractor/tests
           rm -f tasks/extractor/.eslintignore tasks/extractor/.eslintrc.js
           rm -f tasks/extractor/.gitignore tasks/extractor/.prettierignore
-          rm -f tasks/extractor/.prettierrc.json tasks/extractor/.taskkey
-          rm -f tasks/extractor/icon.svg
+          rm -f tasks/extractor/.prettierrc.json tasks/extractor/icon.svg
           rm -f tasks/extractor/package.json tasks/extractor/package-lock.json
           rm -f tasks/extractor/tsconfig.json
 
