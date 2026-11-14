@@ -220,6 +220,14 @@ jobs:
       VERSION: ${{ needs.build.outputs.version }}
       VSIX_PREFIX: AttilaHajdu.jira-issue-extractor
     steps:
+      - name: Checkout build tool manifest
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js for Marketplace publishing
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
       - name: Download source-built VSIX
         uses: actions/download-artifact@v8
         with:
