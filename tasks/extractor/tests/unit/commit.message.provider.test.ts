@@ -1,7 +1,4 @@
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import { expect } from "chai";
 
 import { stubConstructor, stubInterface } from "ts-sinon";
 import { createStubInstance } from "sinon";
