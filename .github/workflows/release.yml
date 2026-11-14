@@ -30,13 +30,13 @@ jobs:
         run: git config --global core.autocrlf false
 
       - name: Checkout source with full commit history
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Set up Node.js for git-cliff
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
 
@@ -75,7 +75,7 @@ jobs:
           echo "Base version: $BASE_VERSION; VSIX version: $VERSION; artifact version: $ARTIFACT_VERSION; version bump: $HAS_VERSION_BUMP"
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
@@ -198,7 +198,7 @@ jobs:
           PY
 
       - name: Upload built VSIX
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ github.event_name != 'workflow_dispatch' && 'vsix-dev' || 'vsix-source-build' }}
           path: dist/*.vsix
@@ -221,7 +221,7 @@ jobs:
       VSIX_PREFIX: AttilaHajdu.jira-issue-extractor
     steps:
       - name: Download source-built VSIX
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: vsix-source-build
           path: dist
