@@ -42,7 +42,7 @@
     "ts-mocha": "^10.1.0",
     "ts-sinon": "^2.0.2",
     "tsc-alias": "^1.6.7",
-    "tsconfig-paths": "^3.14.1",
+    "tsconfig-paths": "^4.2.0",
     "@types/node": "^26.6.6",
     "typescript": "^5.9.3"
   },
