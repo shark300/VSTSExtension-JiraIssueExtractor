@@ -35,7 +35,7 @@ The build, pull request, and Git commit APIs are accessed through the supported
 `SYSTEM_ACCESSTOKEN` is used as a Bearer token. The sample above explicitly passes
 that token to the task. Ensure the build service identity can read builds and code.
 
-### Development and release
+## Development and release
 
 Use Node.js 24 and run the following commands inside `tasks/extractor`:
 
